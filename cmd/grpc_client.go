@@ -2,57 +2,32 @@ package cmd
 
 import (
 	"context"
+	"fmt"
+	"github.com/Brialius/calendar/internal/config"
 	"github.com/Brialius/calendar/internal/grpc/api"
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"log"
-	"time"
 )
-
-var server string
-var title string
-var text string
-var startTime string
-var endTime string
 
 const tsLayout = "2006-01-02T15:04:05"
 
-func parseTs(s string) (*timestamp.Timestamp, error) {
-	t, err := time.Parse(tsLayout, s)
-	if err != nil {
-		return nil, err
-	}
-	ts, err := ptypes.TimestampProto(t)
-	if err != nil {
-		return nil, err
-	}
-	return ts, nil
-}
-
 var GrpcClientCmd = &cobra.Command{
 	Use:   "grpc_client",
-	Short: "Run grpc client",
+	Short: "Run gRPC client",
 	Run: func(cmd *cobra.Command, args []string) {
+		conf := config.GetGrpcClientConfig(cmd, tsLayout)
+		server := fmt.Sprintf("%s:%d", conf.Host, conf.Port)
 		conn, err := grpc.Dial(server, grpc.WithInsecure())
 		if err != nil {
 			log.Fatal(err)
 		}
 		client := api.NewCalendarServiceClient(conn)
-		st, err := parseTs(startTime)
-		if err != nil {
-			log.Fatal(err)
-		}
-		et, err := parseTs(endTime)
-		if err != nil {
-			log.Fatal(err)
-		}
 		req := &api.CreateEventRequest{
-			Title:     title,
-			Text:      text,
-			StartTime: st,
-			EndTime:   et,
+			Title:     conf.Title,
+			Text:      conf.Text,
+			StartTime: conf.StartTime,
+			EndTime:   conf.EndTime,
 		}
 		resp, err := client.CreateEvent(context.Background(), req)
 		if err != nil {
@@ -67,9 +42,10 @@ var GrpcClientCmd = &cobra.Command{
 }
 
 func init() {
-	GrpcClientCmd.Flags().StringVar(&server, "server", "localhost:8080", "host:port to connect to")
-	GrpcClientCmd.Flags().StringVar(&title, "title", "", "event title")
-	GrpcClientCmd.Flags().StringVar(&text, "text", "", "event text")
-	GrpcClientCmd.Flags().StringVar(&startTime, "start-time", "", "event start time, format: "+tsLayout)
-	GrpcClientCmd.Flags().StringVar(&endTime, "end-time", "", "event end time, format: "+tsLayout)
+	GrpcClientCmd.Flags().StringP("host", "n", "localhost", "host name")
+	GrpcClientCmd.Flags().StringP("port", "p", "8080", "port to listen")
+	GrpcClientCmd.Flags().StringP("title", "t", "", "event title")
+	GrpcClientCmd.Flags().StringP("body", "b", "", "event text body")
+	GrpcClientCmd.Flags().StringP("start-time", "s", "", "event start time, format: "+tsLayout)
+	GrpcClientCmd.Flags().StringP("end-time", "e", "", "event end time, format: "+tsLayout)
 }

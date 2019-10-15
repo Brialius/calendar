@@ -28,3 +28,12 @@ func (es *EventService) CreateEvent(ctx context.Context, owner, title, text stri
 	}
 	return event, nil
 }
+
+func (es *EventService) DeleteEvent(ctx context.Context, id string) error {
+	// TODO: persistence, validation
+	err := es.EventStorage.DeleteEventById(ctx, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}

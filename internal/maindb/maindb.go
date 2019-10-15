@@ -50,3 +50,16 @@ func (pges *PgEventStorage) GetEventsByOwnerStartDate(ctx context.Context, owner
 	// TODO
 	return nil
 }
+
+func (pges *PgEventStorage) DeleteEventById(ctx context.Context, id string) error {
+	query := `
+		DELETE FROM events WHERE id=$1
+	`
+	_, err := pges.db.ExecContext(ctx, query, id)
+	return err
+}
+
+func (pges *PgEventStorage) UpdateEventById(ctx context.Context, id string, event *models.Event) error {
+	// TODO
+	return nil
+}

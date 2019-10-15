@@ -73,6 +73,11 @@ func (cs *CalendarServer) CreateEvent(ctx context.Context, req *CreateEventReque
 	return resp, nil
 }
 
+func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *DeleteEventRequest) (*DeleteEventResponse, error) {
+	// TODO
+	return nil, nil
+}
+
 func (cs *CalendarServer) Serve(addr string) error {
 	s := grpc.NewServer()
 	l, err := net.Listen("tcp", addr)

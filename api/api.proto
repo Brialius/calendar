@@ -25,6 +25,17 @@ message CreateEventResponse {
     }
 }
 
+message DeleteEventRequest {
+    string id = 1;
+}
+
+message DeleteEventResponse {
+    oneof result {
+        string error = 1;
+    }
+}
+
 service CalendarService {
     rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse) {}
+    rpc DeleteEvent(DeleteEventRequest) returns (DeleteEventResponse) {}
 }
