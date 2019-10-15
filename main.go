@@ -12,6 +12,7 @@ var (
 
 func main() {
 	log.Printf("Started calendar %s-%s", version, build)
+
 	if err := cmd.RootCmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
