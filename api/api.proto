@@ -25,6 +25,21 @@ message CreateEventResponse {
     }
 }
 
+message UpdateEventRequest {
+    string id = 1;
+    string title = 2;
+    string text = 3;
+    google.protobuf.Timestamp start_time = 4;
+    google.protobuf.Timestamp end_time = 5;
+}
+
+message UpdateEventResponse {
+    oneof result {
+        Event event = 1;
+        string error = 2;
+    }
+}
+
 message DeleteEventRequest {
     string id = 1;
 }
@@ -36,6 +51,20 @@ message DeleteEventResponse {
 }
 
 service CalendarService {
-    rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse) {}
-    rpc DeleteEvent(DeleteEventRequest) returns (DeleteEventResponse) {}
+    rpc CreateEvent (CreateEventRequest) returns (CreateEventResponse) {
+    }
+    rpc DeleteEvent (DeleteEventRequest) returns (DeleteEventResponse) {
+    }
+    rpc UpdateEvent (UpdateEventRequest) returns (UpdateEventResponse) {
+    }
+    rpc ListEvents (ListEventsRequest) returns (ListEventsResponse) {
+    }
+}
+
+message ListEventsRequest {
+    google.protobuf.Timestamp start_time = 1;
+}
+
+message ListEventsResponse {
+    repeated Event events = 1;
 }

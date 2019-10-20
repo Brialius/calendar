@@ -7,6 +7,7 @@ func (ee EventError) Error() string {
 }
 
 var (
-	ErrOverlaping       = EventError("another event exists for this date")
-	ErrIncorrectEndDate = EventError("end_date is incorrect")
+	ErrOverlaping         = EventError("another event exists for this date")
+	ErrIncorrectEndDate   = EventError("end-date is incorrect")
+	ErrIncorrectStartDate = EventError("start-date is incorrect")
 )

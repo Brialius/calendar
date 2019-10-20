@@ -46,9 +46,16 @@ func (pges *PgEventStorage) GetEventById(ctx context.Context, id string) (*model
 	return nil, nil
 }
 
-func (pges *PgEventStorage) GetEventsByOwnerStartDate(ctx context.Context, owner string, startTime time.Time) []*models.Event {
-	// TODO
-	return nil
+func (pges *PgEventStorage) GetEventsByOwnerStartDate(ctx context.Context, owner string, startTime time.Time) ([]*models.Event, error) {
+	query := `
+		SELECT * FROM events WHERE owner=$1 AND start_time>=$2
+`
+	var events []*models.Event
+	err := pges.db.SelectContext(ctx, &events, query, owner, startTime)
+	if err != nil {
+		return nil, err
+	}
+	return events, nil
 }
 
 func (pges *PgEventStorage) DeleteEventById(ctx context.Context, id string) error {

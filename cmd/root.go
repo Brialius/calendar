@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"log"
 )
 
 var RootCmd = &cobra.Command{
@@ -12,4 +13,5 @@ var RootCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(GrpcServerCmd)
 	RootCmd.AddCommand(GrpcClientCmd)
+	log.SetFlags(log.Llongfile)
 }
