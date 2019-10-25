@@ -1,7 +1,6 @@
 package config
 
 import (
-	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
 )
@@ -11,21 +10,11 @@ type StorageConfig struct {
 	StorageType string
 }
 
-func GetStorageConfig(cmd *cobra.Command) *StorageConfig {
-	viper.AutomaticEnv()
-	_ = viper.BindPFlag("dsn", cmd.Flags().Lookup("dsn"))
-	_ = viper.BindPFlag("storage", cmd.Flags().Lookup("storage"))
-	storageValidation()
+func GetStorageConfig() *StorageConfig {
+	log.Println("Configuring storage...")
+	viper.SetDefault("dsn", "host=127.0.0.1 user=event_user password=event_pwd dbname=event_db")
+	viper.SetDefault("storage", "pg")
 	return newDbConfig()
-}
-
-func storageValidation() {
-	if len(viper.GetString("dsn")) == 0 {
-		log.Fatalf("dsn parameter is required")
-	}
-	if len(viper.GetString("storage")) == 0 {
-		log.Fatalf("storage parameter is required")
-	}
 }
 
 func newDbConfig() *StorageConfig {

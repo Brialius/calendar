@@ -1,8 +1,9 @@
 package cmd
 
 import (
+	"github.com/Brialius/calendar/internal/config"
 	"github.com/spf13/cobra"
-	"log"
+	"github.com/spf13/viper"
 )
 
 var RootCmd = &cobra.Command{
@@ -11,7 +12,7 @@ var RootCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(GrpcServerCmd)
-	RootCmd.AddCommand(GrpcClientCmd)
-	log.SetFlags(log.Llongfile)
+	cobra.OnInitialize(config.SetLoggerConfig)
+	RootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose logging")
+	_ = viper.BindPFlag("verbose", RootCmd.PersistentFlags().Lookup("verbose"))
 }

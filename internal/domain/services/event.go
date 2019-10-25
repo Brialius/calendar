@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"github.com/Brialius/calendar/internal/config"
 	"github.com/Brialius/calendar/internal/domain/interfaces"
 	"github.com/Brialius/calendar/internal/domain/models"
 	"github.com/satori/go.uuid"

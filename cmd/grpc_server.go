@@ -9,6 +9,7 @@ import (
 	"github.com/Brialius/calendar/internal/maindb"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"log"
 )
 
@@ -34,8 +35,29 @@ var GrpcServerCmd = &cobra.Command{
 	Use:   "grpc_server",
 	Short: "Run gRPC server",
 	Run: func(cmd *cobra.Command, args []string) {
-		serverConfig := config.GetGrpcServerConfig(cmd)
-		storageConfig := config.GetStorageConfig(cmd)
+		serverConfig := config.GetGrpcServerConfig()
+		storageConfig := config.GetStorageConfig()
+		isAbsentParam := false
+		if serverConfig.Host == "" {
+			isAbsentParam = true
+			log.Println("Host is not set")
+		}
+		if serverConfig.Port == "" {
+			isAbsentParam = true
+			log.Println("Port is not set")
+		}
+		if storageConfig.Dsn == "" {
+			isAbsentParam = true
+			log.Println("Dsn is not set")
+		}
+		if storageConfig.StorageType == "" {
+			isAbsentParam = true
+			log.Println("StorageType is not set")
+		}
+		if isAbsentParam {
+			log.Fatal("Some parameters is not set")
+		}
+
 		storage, err := selectStorage(storageConfig.StorageType, storageConfig.Dsn)
 		if err != nil {
 			log.Fatal(err)
@@ -44,17 +66,24 @@ var GrpcServerCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		addr := fmt.Sprintf("%s:%d", serverConfig.Host, serverConfig.Port)
+		addr := fmt.Sprintf("%s:%s", serverConfig.Host, serverConfig.Port)
+		log.Printf("Starting server on %s...", addr)
 		err = server.Serve(addr)
 		if err != nil {
 			log.Fatal(err)
 		}
 	},
+	Aliases: []string{"gs"},
 }
 
 func init() {
-	GrpcServerCmd.Flags().StringP("host", "n", "localhost", "host name")
-	GrpcServerCmd.Flags().StringP("port", "p", "8080", "port to listen")
-	GrpcServerCmd.Flags().StringP("dsn", "d", "host=127.0.0.1 user=event_user password=event_pwd dbname=event_db", "database connection string")
-	GrpcServerCmd.Flags().StringP("storage", "s", "pg", "storage type")
+	RootCmd.AddCommand(GrpcServerCmd)
+	GrpcServerCmd.Flags().StringP("host", "n", "", "host name")
+	GrpcServerCmd.Flags().IntP("port", "p", 0, "port to listen")
+	GrpcServerCmd.Flags().StringP("dsn", "d", "", "database connection string")
+	GrpcServerCmd.Flags().StringP("storage", "s", "", "storage type")
+	_ = viper.BindPFlag("grpc-srv-host", GrpcServerCmd.Flags().Lookup("host"))
+	_ = viper.BindPFlag("grpc-srv-port", GrpcServerCmd.Flags().Lookup("port"))
+	_ = viper.BindPFlag("dsn", GrpcServerCmd.Flags().Lookup("dsn"))
+	_ = viper.BindPFlag("storage", GrpcServerCmd.Flags().Lookup("storage"))
 }

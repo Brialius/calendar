@@ -2,9 +2,11 @@ package api
 
 import (
 	"context"
+	"github.com/Brialius/calendar/internal/config"
 	"github.com/Brialius/calendar/internal/domain/models"
 	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/grpc"
+	"log"
 	"net"
 	"time"
 
@@ -18,11 +20,8 @@ type CalendarServer struct {
 
 // implements CalendarServiceServer
 func (cs *CalendarServer) CreateEvent(ctx context.Context, req *CreateEventRequest) (*CreateEventResponse, error) {
-	owner := "admin"
-	if o := ctx.Value("owner"); o != nil {
-		owner, _ = o.(string)
-	}
-
+	log.Printf("Creating new event: `%s`...", req.GetTitle())
+	owner := req.GetOwner()
 	startTime := new(time.Time)
 	if req.GetStartTime() != nil {
 		st, err := ptypes.Timestamp(req.GetStartTime())
@@ -44,6 +43,7 @@ func (cs *CalendarServer) CreateEvent(ctx context.Context, req *CreateEventReque
 	event, err := cs.EventService.CreateEvent(ctx, owner, req.GetTitle(), req.GetText(), startTime, endTime)
 	if err != nil {
 		if berr, ok := err.(errors.EventError); ok {
+			log.Printf("Error during event creation: `%s` -  %s", req.GetTitle(), berr)
 			resp := &CreateEventResponse{
 				Result: &CreateEventResponse_Error{
 					Error: string(berr),
@@ -51,9 +51,11 @@ func (cs *CalendarServer) CreateEvent(ctx context.Context, req *CreateEventReque
 			}
 			return resp, nil
 		} else {
+			log.Printf("Error during event creation: `%s` -  %s", req.GetTitle(), err)
 			return nil, err
 		}
 	}
+	log.Printf("Event created: `%s` -  %s", req.GetTitle(), event.Id)
 	protoEvent, err := eventToProto(event)
 	resp := &CreateEventResponse{
 		Result: &CreateEventResponse_Event{
@@ -84,6 +86,7 @@ func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *DeleteEventReque
 	err := cs.EventService.DeleteEvent(ctx, req.GetId())
 	if err != nil {
 		if berr, ok := err.(errors.EventError); ok {
+			log.Printf("Error during event creation: `%s` -  %s", req.GetId(), berr)
 			resp := &DeleteEventResponse{
 				Result: &DeleteEventResponse_Error{
 					Error: string(berr),
@@ -91,25 +94,29 @@ func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *DeleteEventReque
 			}
 			return resp, nil
 		} else {
+			log.Printf("Error during event creation: `%s` -  %s", req.GetId(), err)
 			return nil, err
 		}
+	}
+	if config.Verbose {
+		log.Printf("Event Deleted: `%s`", req.GetId())
 	}
 	return &DeleteEventResponse{}, nil
 }
 
 func (cs *CalendarServer) ListEvents(ctx context.Context, req *ListEventsRequest) (*ListEventsResponse, error) {
-	owner := "admin"
-	if o := ctx.Value("owner"); o != nil {
-		owner, _ = o.(string)
-	}
+	owner := req.GetOwner()
+
 	st, err := ptypes.Timestamp(req.GetStartTime())
 	if err != nil {
 		return nil, err
 	}
 	events, err := cs.EventService.ListEvents(ctx, owner, st)
 	if err != nil {
+		log.Printf("Error during event list preparing for user: `%s` since:  %s - %s", owner, req.GetStartTime(), err)
 		return nil, err
 	}
+	log.Printf("Events list received for user: `%s` since:  %s", owner, req.GetStartTime())
 	protoEvents := make([]*Event, 0, len(events))
 	for _, e := range events {
 		sTime, err := ptypes.TimestampProto(*e.StartTime)
@@ -137,6 +144,7 @@ func (cs *CalendarServer) ListEvents(ctx context.Context, req *ListEventsRequest
 
 func (cs *CalendarServer) UpdateEvent(ctx context.Context, req *UpdateEventRequest) (*UpdateEventResponse, error) {
 	// TODO
+	log.Printf("Event Updated: `%s`", req.GetId())
 	return nil, nil
 }
 
