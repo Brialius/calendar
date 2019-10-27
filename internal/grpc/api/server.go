@@ -3,15 +3,19 @@ package api
 import (
 	"context"
 	"github.com/Brialius/calendar/internal/config"
+	"github.com/Brialius/calendar/internal/domain/errors"
 	"github.com/Brialius/calendar/internal/domain/models"
+	"github.com/Brialius/calendar/internal/domain/services"
 	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"log"
 	"net"
-	"time"
-
-	"github.com/Brialius/calendar/internal/domain/errors"
-	"github.com/Brialius/calendar/internal/domain/services"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 type CalendarServer struct {
@@ -21,29 +25,24 @@ type CalendarServer struct {
 // implements CalendarServiceServer
 func (cs *CalendarServer) CreateEvent(ctx context.Context, req *CreateEventRequest) (*CreateEventResponse, error) {
 	log.Printf("Creating new event: `%s`...", req.GetTitle())
-	owner := req.GetOwner()
-	startTime := new(time.Time)
-	if req.GetStartTime() != nil {
-		st, err := ptypes.Timestamp(req.GetStartTime())
-		if err != nil {
-			return nil, err
-		}
-		startTime = &st
-	}
-
-	endTime := new(time.Time)
-	if req.GetEndTime() != nil {
-		et, err := ptypes.Timestamp(req.GetEndTime())
-		if err != nil {
-			return nil, err
-		}
-		endTime = &et
-	}
-
-	event, err := cs.EventService.CreateEvent(ctx, owner, req.GetTitle(), req.GetText(), startTime, endTime)
+	owner, err := getOwner(ctx)
 	if err != nil {
+		return nil, err
+	}
+	st, err := ptypes.Timestamp(req.GetStartTime())
+	if err != nil {
+		log.Printf("start time is incorrect: %s", err)
+		return nil, err
+	}
+	et, err := ptypes.Timestamp(req.GetEndTime())
+	if err != nil {
+		log.Printf("end time is incorrect: %s", err)
+		return nil, err
+	}
+	event, err := cs.EventService.CreateEvent(ctx, owner, req.GetTitle(), req.GetText(), &st, &et)
+	if err != nil {
+		log.Printf("Error during event creation: `%s` -  %s", req.GetTitle(), err)
 		if berr, ok := err.(errors.EventError); ok {
-			log.Printf("Error during event creation: `%s` -  %s", req.GetTitle(), berr)
 			resp := &CreateEventResponse{
 				Result: &CreateEventResponse_Error{
 					Error: string(berr),
@@ -51,12 +50,14 @@ func (cs *CalendarServer) CreateEvent(ctx context.Context, req *CreateEventReque
 			}
 			return resp, nil
 		} else {
-			log.Printf("Error during event creation: `%s` -  %s", req.GetTitle(), err)
 			return nil, err
 		}
 	}
 	log.Printf("Event created: `%s` -  %s", req.GetTitle(), event.Id)
 	protoEvent, err := eventToProto(event)
+	if err != nil {
+		return nil, err
+	}
 	resp := &CreateEventResponse{
 		Result: &CreateEventResponse_Event{
 			Event: protoEvent,
@@ -70,7 +71,6 @@ func eventToProto(event *models.Event) (*Event, error) {
 		Id:    event.Id.String(),
 		Title: event.Title,
 		Text:  event.Text,
-		Owner: event.Owner,
 	}
 	var err error
 	if protoEvent.StartTime, err = ptypes.TimestampProto(*event.StartTime); err != nil {
@@ -83,10 +83,15 @@ func eventToProto(event *models.Event) (*Event, error) {
 }
 
 func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *DeleteEventRequest) (*DeleteEventResponse, error) {
-	err := cs.EventService.DeleteEvent(ctx, req.GetId())
+	log.Printf("Deleting event: `%s`...", req.GetId())
+	owner, err := getOwner(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = cs.EventService.DeleteEvent(ctx, req.GetId(), owner)
 	if err != nil {
 		if berr, ok := err.(errors.EventError); ok {
-			log.Printf("Error during event creation: `%s` -  %s", req.GetId(), berr)
+			log.Printf("Error during event deletion: `%s` -  %s", req.GetId(), berr)
 			resp := &DeleteEventResponse{
 				Result: &DeleteEventResponse_Error{
 					Error: string(berr),
@@ -94,7 +99,7 @@ func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *DeleteEventReque
 			}
 			return resp, nil
 		} else {
-			log.Printf("Error during event creation: `%s` -  %s", req.GetId(), err)
+			log.Printf("Error during event deletion: `%s` -  %s", req.GetId(), err)
 			return nil, err
 		}
 	}
@@ -104,37 +109,62 @@ func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *DeleteEventReque
 	return &DeleteEventResponse{}, nil
 }
 
-func (cs *CalendarServer) ListEvents(ctx context.Context, req *ListEventsRequest) (*ListEventsResponse, error) {
-	owner := req.GetOwner()
+func (cs *CalendarServer) GetEvent(ctx context.Context, req *GetEventRequest) (*GetEventResponse, error) {
+	log.Printf("Getting event: `%s`...", req.GetId())
+	owner, err := getOwner(ctx)
+	if err != nil {
+		return nil, err
+	}
+	event, err := cs.EventService.GetEvent(ctx, req.GetId(), owner)
+	if err != nil {
+		if berr, ok := err.(errors.EventError); ok {
+			log.Printf("Error during getting event: `%s` -  %s", req.GetId(), berr)
+			resp := &GetEventResponse{
+				Result: &GetEventResponse_Error{
+					Error: string(berr),
+				},
+			}
+			return resp, nil
+		} else {
+			log.Printf("Error during getting event: `%s` -  %s", req.GetId(), err)
+			return nil, err
+		}
+	}
+	if config.Verbose {
+		log.Printf("Event received: `%s`", req.GetId())
+	}
+	protoEvent, err := eventToProto(event)
+	if err != nil {
+		return nil, err
+	}
+	return &GetEventResponse{
+		Result: &GetEventResponse_Event{Event: protoEvent},
+	}, nil
+}
 
+func (cs *CalendarServer) ListEvents(ctx context.Context, req *ListEventsRequest) (*ListEventsResponse, error) {
+	owner, err := getOwner(ctx)
+	if err != nil {
+		return nil, err
+	}
 	st, err := ptypes.Timestamp(req.GetStartTime())
 	if err != nil {
 		return nil, err
 	}
-	events, err := cs.EventService.ListEvents(ctx, owner, st)
+	log.Printf("Getting events list: Owner: `%s`, start date: %s ...", owner, st)
+	events, err := cs.EventService.ListEvents(ctx, owner, &st)
 	if err != nil {
 		log.Printf("Error during event list preparing for user: `%s` since:  %s - %s", owner, req.GetStartTime(), err)
 		return nil, err
 	}
-	log.Printf("Events list received for user: `%s` since:  %s", owner, req.GetStartTime())
+	log.Printf("Events list received for user: `%s` since:  %s", owner, st)
 	protoEvents := make([]*Event, 0, len(events))
 	for _, e := range events {
-		sTime, err := ptypes.TimestampProto(*e.StartTime)
+		protoEvent, err := eventToProto(e)
 		if err != nil {
 			return nil, err
 		}
-		eTime, err := ptypes.TimestampProto(*e.EndTime)
-		if err != nil {
-			return nil, err
-		}
-		protoEvents = append(protoEvents, &Event{
-			Id:        e.Id.String(),
-			Title:     e.Title,
-			Text:      e.Text,
-			Owner:     e.Owner,
-			StartTime: sTime,
-			EndTime:   eTime,
-		})
+		protoEvents = append(protoEvents, protoEvent)
 	}
 	resp := &ListEventsResponse{
 		Events: protoEvents,
@@ -142,14 +172,67 @@ func (cs *CalendarServer) ListEvents(ctx context.Context, req *ListEventsRequest
 	return resp, nil
 }
 
+func getOwner(ctx context.Context) (string, error) {
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if o := md.Get("owner"); len(o) > 0 {
+			return o[0], nil
+		}
+	}
+	return "", status.Errorf(codes.PermissionDenied, "Not authorized")
+}
+
 func (cs *CalendarServer) UpdateEvent(ctx context.Context, req *UpdateEventRequest) (*UpdateEventResponse, error) {
-	// TODO
-	log.Printf("Event Updated: `%s`", req.GetId())
-	return nil, nil
+	log.Printf("Updating event: `%s`...", req.GetId())
+	owner, err := getOwner(ctx)
+	if err != nil {
+		return nil, err
+	}
+	st, err := ptypes.Timestamp(req.GetStartTime())
+	if err != nil {
+		log.Printf("start time is incorrect: %s", err)
+		return nil, err
+	}
+	et, err := ptypes.Timestamp(req.GetEndTime())
+	if err != nil {
+		log.Printf("end time is incorrect: %s", err)
+		return nil, err
+	}
+	event, err := cs.EventService.UpdateEvent(ctx, owner, req.GetTitle(), req.GetText(), req.GetId(), &st, &et)
+	if err != nil {
+		log.Printf("Error during event creation: `%s` -  %s", req.GetTitle(), err)
+		if berr, ok := err.(errors.EventError); ok {
+			resp := &UpdateEventResponse{
+				Result: &UpdateEventResponse_Error{
+					Error: string(berr),
+				},
+			}
+			return resp, nil
+		} else {
+			return nil, err
+		}
+	}
+	protoEvent, err := eventToProto(event)
+	if err != nil {
+		return nil, err
+	}
+	resp := &UpdateEventResponse{
+		Result: &UpdateEventResponse_Event{
+			Event: protoEvent,
+		},
+	}
+	return resp, nil
 }
 
 func (cs *CalendarServer) Serve(addr string) error {
 	s := grpc.NewServer()
+	go func() {
+		stop := make(chan os.Signal, 1)
+		signal.Notify(stop, os.Interrupt, syscall.SIGINT)
+		<-stop
+		log.Printf("Interrupt signal")
+		log.Printf("Gracefully shutdown")
+		s.GracefulStop()
+	}()
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err

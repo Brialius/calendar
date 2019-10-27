@@ -1,36 +1,60 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"github.com/Brialius/calendar/internal/config"
 	"github.com/Brialius/calendar/internal/grpc/api"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"log"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
+	"time"
 )
 
 const tsLayout = "2006-01-02T15:04:05"
+const ReqTimeout = time.Second * 10
 
 var GrpcClientCmd = &cobra.Command{
 	Use:       "grpc_client [add, delete, update, list]",
 	Short:     "Run gRPC client",
 	Aliases:   []string{"gc"},
-	ValidArgs: []string{"add", "delete", "update", "list"},
+	ValidArgs: []string{"add", "delete", "update", "list", "get", "del", "upd", "ls"},
 	Args:      cobra.ExactValidArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		grpcConfig = getGrpcClientConfig()
-		grpcClient = getGrpcClient(grpcConfig)
+		ctx, cancel := context.WithTimeout(context.Background(), ReqTimeout)
+		ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("owner", grpcConfig.Owner))
+		grpcClient = getGrpcClient(ctx, grpcConfig)
+		go func() {
+			stop := make(chan os.Signal, 1)
+			signal.Notify(stop, os.Interrupt, syscall.SIGINT)
+			<-stop
+			log.Printf("Interrupt signal")
+			cancel()
+		}()
 		switch args[0] {
 		case "add":
-			runCreateRequest()
+			runCreateRequest(ctx)
 		case "delete":
-			runDeleteRequest()
+			runDeleteRequest(ctx)
+		case "del":
+			runDeleteRequest(ctx)
 		case "update":
-			runUpdateRequest()
+			runUpdateRequest(ctx)
+		case "upd":
+			runUpdateRequest(ctx)
 		case "list":
-			runListRequest()
+			runListRequest(ctx)
+		case "ls":
+			runListRequest(ctx)
+		case "get":
+			runGetRequest(ctx)
 		}
 	},
 }
@@ -38,12 +62,12 @@ var GrpcClientCmd = &cobra.Command{
 var grpcConfig *config.GrpcClientConfig
 var grpcClient api.CalendarServiceClient
 
-func getGrpcClient(conf *config.GrpcClientConfig) api.CalendarServiceClient {
+func getGrpcClient(ctx context.Context, conf *config.GrpcClientConfig) api.CalendarServiceClient {
 	if _, err := strconv.Atoi(conf.Port); err != nil {
 		log.Fatal(err)
 	}
 	server := fmt.Sprintf("%s:%s", conf.Host, conf.Port)
-	conn, err := grpc.Dial(server, grpc.WithInsecure())
+	conn, err := grpc.DialContext(ctx, server, grpc.WithInsecure(), grpc.WithUserAgent("calendar client"))
 	if err != nil {
 		log.Fatal(err)
 	}

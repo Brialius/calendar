@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func runCreateRequest() {
+func runCreateRequest(ctx context.Context) {
 	isAbsentParam := false
 	if grpcConfig.Title == "" {
 		isAbsentParam = true
@@ -39,23 +39,18 @@ func runCreateRequest() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if et.Seconds < st.Seconds {
-		log.Fatal("End time less then Start time")
-	}
 	req := &api.CreateEventRequest{
 		Title:     grpcConfig.Title,
 		Text:      grpcConfig.Text,
-		Owner:     grpcConfig.Owner,
 		StartTime: st,
 		EndTime:   et,
 	}
-	resp, err := grpcClient.CreateEvent(context.Background(), req)
+	resp, err := grpcClient.CreateEvent(ctx, req)
 	if err != nil {
 		log.Fatal(err)
 	}
 	if resp.GetError() != "" {
 		log.Fatal(resp.GetError())
-	} else {
-		log.Println(resp.GetEvent().Id)
 	}
+	log.Println(resp.GetEvent().Id)
 }

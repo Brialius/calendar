@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func runUpdateRequest() {
+func runUpdateRequest(ctx context.Context) {
 	isAbsentParam := false
 	if grpcConfig.Id == "" {
 		isAbsentParam = true
@@ -50,17 +50,15 @@ func runUpdateRequest() {
 		Id:        grpcConfig.Id,
 		Title:     grpcConfig.Title,
 		Text:      grpcConfig.Text,
-		Owner:     grpcConfig.Owner,
 		StartTime: st,
 		EndTime:   et,
 	}
-	resp, err := grpcClient.UpdateEvent(context.Background(), req)
+	resp, err := grpcClient.UpdateEvent(ctx, req)
 	if err != nil {
 		log.Fatal(err)
 	}
 	if resp.GetError() != "" {
 		log.Fatal(resp.GetError())
-	} else {
-		log.Println(resp.GetEvent())
 	}
+	log.Println(resp.GetEvent())
 }

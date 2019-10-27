@@ -46,11 +46,11 @@ func GetGrpcClientConfig() *GrpcClientConfig {
 }
 
 func (c *GrpcClientConfig) GetStartTime() (*timestamp.Timestamp, error) {
-	return parseTs(viper.GetString("start-time"), c.TsLayout)
+	return parseTs(c.StartTime, c.TsLayout)
 }
 
 func (c *GrpcClientConfig) GetEndTime() (*timestamp.Timestamp, error) {
-	return parseTs(viper.GetString("end-time"), c.TsLayout)
+	return parseTs(c.EndTime, c.TsLayout)
 }
 
 func newGrpcClientConfig() *GrpcClientConfig {

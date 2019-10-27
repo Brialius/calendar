@@ -6,14 +6,14 @@ import (
 	"log"
 )
 
-func runDeleteRequest() {
+func runDeleteRequest(ctx context.Context) {
 	if grpcConfig.Id == "" {
 		log.Fatal("Id is not set")
 	}
 	req := &api.DeleteEventRequest{
 		Id: grpcConfig.Id,
 	}
-	resp, err := grpcClient.DeleteEvent(context.Background(), req)
+	resp, err := grpcClient.DeleteEvent(ctx, req)
 	if err != nil {
 		log.Fatal(err)
 	}

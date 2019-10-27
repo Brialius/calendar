@@ -2,7 +2,7 @@ package services
 
 import (
 	"context"
-	"github.com/Brialius/calendar/internal/config"
+	"github.com/Brialius/calendar/internal/domain/errors"
 	"github.com/Brialius/calendar/internal/domain/interfaces"
 	"github.com/Brialius/calendar/internal/domain/models"
 	"github.com/satori/go.uuid"
@@ -14,7 +14,7 @@ type EventService struct {
 	EventStorage interfaces.EventStorage
 }
 
-func (es *EventService) CreateEvent(ctx context.Context, owner, title, text string, startTime *time.Time, endTime *time.Time) (*models.Event, error) {
+func (es *EventService) CreateEvent(ctx context.Context, owner, title, text string, startTime, endTime *time.Time) (*models.Event, error) {
 	event := &models.Event{
 		Id:        uuid.NewV4(),
 		Owner:     owner,
@@ -23,7 +23,17 @@ func (es *EventService) CreateEvent(ctx context.Context, owner, title, text stri
 		StartTime: startTime,
 		EndTime:   endTime,
 	}
-	err := es.EventStorage.SaveEvent(ctx, event)
+	count, err := es.EventStorage.GetEventsCountByOwnerStartDateEndDate(ctx, owner, startTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+	if count > 0 {
+		return nil, errors.ErrOverlaping
+	}
+	if startTime.After(*endTime) {
+		return nil, errors.ErrIncorrectEndDate
+	}
+	err = es.EventStorage.SaveEvent(ctx, event)
 	if err != nil {
 		log.Printf("can't create event `%s`: %s", event, err)
 		return nil, err
@@ -31,12 +41,12 @@ func (es *EventService) CreateEvent(ctx context.Context, owner, title, text stri
 	return event, nil
 }
 
-func (es *EventService) DeleteEvent(ctx context.Context, id string) error {
+func (es *EventService) DeleteEvent(ctx context.Context, id, owner string) error {
 	_, err := parseUuid(id)
 	if err != nil {
 		return err
 	}
-	err = es.EventStorage.DeleteEventById(ctx, id)
+	err = es.EventStorage.DeleteEventByIdOwner(ctx, id, owner)
 	if err != nil {
 		log.Printf("can't delete event `%s`: %s", id, err)
 		return err
@@ -44,7 +54,20 @@ func (es *EventService) DeleteEvent(ctx context.Context, id string) error {
 	return nil
 }
 
-func (es *EventService) UpdateEvent(ctx context.Context, owner, title, text, id string, startTime *time.Time, endTime *time.Time) (*models.Event, error) {
+func (es *EventService) GetEvent(ctx context.Context, id, owner string) (*models.Event, error) {
+	_, err := parseUuid(id)
+	if err != nil {
+		return nil, err
+	}
+	event, err := es.EventStorage.GetEventByIdOwner(ctx, id, owner)
+	if err != nil {
+		log.Printf("can't get event `%s`: %s", id, err)
+		return nil, err
+	}
+	return event, nil
+}
+
+func (es *EventService) UpdateEvent(ctx context.Context, owner, title, text, id string, startTime, endTime *time.Time) (*models.Event, error) {
 	uuidId, err := parseUuid(id)
 	event := &models.Event{
 		Id:        uuidId,
@@ -62,7 +85,7 @@ func (es *EventService) UpdateEvent(ctx context.Context, owner, title, text, id 
 	return event, nil
 }
 
-func (es *EventService) ListEvents(ctx context.Context, owner string, startTime time.Time) ([]*models.Event, error) {
+func (es *EventService) ListEvents(ctx context.Context, owner string, startTime *time.Time) ([]*models.Event, error) {
 	events, err := es.EventStorage.GetEventsByOwnerStartDate(ctx, owner, startTime)
 	if err != nil {
 		log.Printf("can't get list of events for owner: `%s` startTime: `%s`: %s", owner, startTime, err)

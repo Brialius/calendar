@@ -12,7 +12,9 @@ var RootCmd = &cobra.Command{
 }
 
 func init() {
-	cobra.OnInitialize(config.SetLoggerConfig)
+	cobra.OnInitialize(config.SetConfig)
 	RootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose logging")
+	RootCmd.PersistentFlags().StringP("config", "c", "", "Config file location")
 	_ = viper.BindPFlag("verbose", RootCmd.PersistentFlags().Lookup("verbose"))
+	_ = viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
 }

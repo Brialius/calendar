@@ -29,9 +29,8 @@ type Event struct {
 	Id                   string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Title                string               `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	Text                 string               `protobuf:"bytes,3,opt,name=text,proto3" json:"text,omitempty"`
-	Owner                string               `protobuf:"bytes,4,opt,name=owner,proto3" json:"owner,omitempty"`
-	StartTime            *timestamp.Timestamp `protobuf:"bytes,5,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
-	EndTime              *timestamp.Timestamp `protobuf:"bytes,6,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
+	StartTime            *timestamp.Timestamp `protobuf:"bytes,4,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	EndTime              *timestamp.Timestamp `protobuf:"bytes,5,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
 	XXX_sizecache        int32                `json:"-"`
@@ -83,13 +82,6 @@ func (m *Event) GetText() string {
 	return ""
 }
 
-func (m *Event) GetOwner() string {
-	if m != nil {
-		return m.Owner
-	}
-	return ""
-}
-
 func (m *Event) GetStartTime() *timestamp.Timestamp {
 	if m != nil {
 		return m.StartTime
@@ -107,9 +99,8 @@ func (m *Event) GetEndTime() *timestamp.Timestamp {
 type CreateEventRequest struct {
 	Title                string               `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
 	Text                 string               `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
-	Owner                string               `protobuf:"bytes,3,opt,name=owner,proto3" json:"owner,omitempty"`
-	StartTime            *timestamp.Timestamp `protobuf:"bytes,4,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
-	EndTime              *timestamp.Timestamp `protobuf:"bytes,5,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
+	StartTime            *timestamp.Timestamp `protobuf:"bytes,3,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	EndTime              *timestamp.Timestamp `protobuf:"bytes,4,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
 	XXX_sizecache        int32                `json:"-"`
@@ -150,13 +141,6 @@ func (m *CreateEventRequest) GetTitle() string {
 func (m *CreateEventRequest) GetText() string {
 	if m != nil {
 		return m.Text
-	}
-	return ""
-}
-
-func (m *CreateEventRequest) GetOwner() string {
-	if m != nil {
-		return m.Owner
 	}
 	return ""
 }
@@ -259,9 +243,8 @@ type UpdateEventRequest struct {
 	Id                   string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Title                string               `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
 	Text                 string               `protobuf:"bytes,3,opt,name=text,proto3" json:"text,omitempty"`
-	Owner                string               `protobuf:"bytes,4,opt,name=owner,proto3" json:"owner,omitempty"`
-	StartTime            *timestamp.Timestamp `protobuf:"bytes,5,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
-	EndTime              *timestamp.Timestamp `protobuf:"bytes,6,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
+	StartTime            *timestamp.Timestamp `protobuf:"bytes,4,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	EndTime              *timestamp.Timestamp `protobuf:"bytes,5,opt,name=end_time,json=endTime,proto3" json:"end_time,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
 	XXX_unrecognized     []byte               `json:"-"`
 	XXX_sizecache        int32                `json:"-"`
@@ -309,13 +292,6 @@ func (m *UpdateEventRequest) GetTitle() string {
 func (m *UpdateEventRequest) GetText() string {
 	if m != nil {
 		return m.Text
-	}
-	return ""
-}
-
-func (m *UpdateEventRequest) GetOwner() string {
-	if m != nil {
-		return m.Owner
 	}
 	return ""
 }
@@ -453,6 +429,125 @@ func (m *DeleteEventRequest) GetId() string {
 	return ""
 }
 
+type GetEventRequest struct {
+	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GetEventRequest) Reset()         { *m = GetEventRequest{} }
+func (m *GetEventRequest) String() string { return proto.CompactTextString(m) }
+func (*GetEventRequest) ProtoMessage()    {}
+func (*GetEventRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1b40cafcd4234784, []int{6}
+}
+
+func (m *GetEventRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetEventRequest.Unmarshal(m, b)
+}
+func (m *GetEventRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetEventRequest.Marshal(b, m, deterministic)
+}
+func (m *GetEventRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetEventRequest.Merge(m, src)
+}
+func (m *GetEventRequest) XXX_Size() int {
+	return xxx_messageInfo_GetEventRequest.Size(m)
+}
+func (m *GetEventRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetEventRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetEventRequest proto.InternalMessageInfo
+
+func (m *GetEventRequest) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+type GetEventResponse struct {
+	// Types that are valid to be assigned to Result:
+	//	*GetEventResponse_Event
+	//	*GetEventResponse_Error
+	Result               isGetEventResponse_Result `protobuf_oneof:"result"`
+	XXX_NoUnkeyedLiteral struct{}                  `json:"-"`
+	XXX_unrecognized     []byte                    `json:"-"`
+	XXX_sizecache        int32                     `json:"-"`
+}
+
+func (m *GetEventResponse) Reset()         { *m = GetEventResponse{} }
+func (m *GetEventResponse) String() string { return proto.CompactTextString(m) }
+func (*GetEventResponse) ProtoMessage()    {}
+func (*GetEventResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1b40cafcd4234784, []int{7}
+}
+
+func (m *GetEventResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetEventResponse.Unmarshal(m, b)
+}
+func (m *GetEventResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetEventResponse.Marshal(b, m, deterministic)
+}
+func (m *GetEventResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetEventResponse.Merge(m, src)
+}
+func (m *GetEventResponse) XXX_Size() int {
+	return xxx_messageInfo_GetEventResponse.Size(m)
+}
+func (m *GetEventResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetEventResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetEventResponse proto.InternalMessageInfo
+
+type isGetEventResponse_Result interface {
+	isGetEventResponse_Result()
+}
+
+type GetEventResponse_Event struct {
+	Event *Event `protobuf:"bytes,1,opt,name=event,proto3,oneof"`
+}
+
+type GetEventResponse_Error struct {
+	Error string `protobuf:"bytes,2,opt,name=error,proto3,oneof"`
+}
+
+func (*GetEventResponse_Event) isGetEventResponse_Result() {}
+
+func (*GetEventResponse_Error) isGetEventResponse_Result() {}
+
+func (m *GetEventResponse) GetResult() isGetEventResponse_Result {
+	if m != nil {
+		return m.Result
+	}
+	return nil
+}
+
+func (m *GetEventResponse) GetEvent() *Event {
+	if x, ok := m.GetResult().(*GetEventResponse_Event); ok {
+		return x.Event
+	}
+	return nil
+}
+
+func (m *GetEventResponse) GetError() string {
+	if x, ok := m.GetResult().(*GetEventResponse_Error); ok {
+		return x.Error
+	}
+	return ""
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*GetEventResponse) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*GetEventResponse_Event)(nil),
+		(*GetEventResponse_Error)(nil),
+	}
+}
+
 type DeleteEventResponse struct {
 	// Types that are valid to be assigned to Result:
 	//	*DeleteEventResponse_Error
@@ -466,7 +561,7 @@ func (m *DeleteEventResponse) Reset()         { *m = DeleteEventResponse{} }
 func (m *DeleteEventResponse) String() string { return proto.CompactTextString(m) }
 func (*DeleteEventResponse) ProtoMessage()    {}
 func (*DeleteEventResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1b40cafcd4234784, []int{6}
+	return fileDescriptor_1b40cafcd4234784, []int{8}
 }
 
 func (m *DeleteEventResponse) XXX_Unmarshal(b []byte) error {
@@ -530,7 +625,7 @@ func (m *ListEventsRequest) Reset()         { *m = ListEventsRequest{} }
 func (m *ListEventsRequest) String() string { return proto.CompactTextString(m) }
 func (*ListEventsRequest) ProtoMessage()    {}
 func (*ListEventsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1b40cafcd4234784, []int{7}
+	return fileDescriptor_1b40cafcd4234784, []int{9}
 }
 
 func (m *ListEventsRequest) XXX_Unmarshal(b []byte) error {
@@ -576,7 +671,7 @@ func (m *ListEventsResponse) Reset()         { *m = ListEventsResponse{} }
 func (m *ListEventsResponse) String() string { return proto.CompactTextString(m) }
 func (*ListEventsResponse) ProtoMessage()    {}
 func (*ListEventsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1b40cafcd4234784, []int{8}
+	return fileDescriptor_1b40cafcd4234784, []int{10}
 }
 
 func (m *ListEventsResponse) XXX_Unmarshal(b []byte) error {
@@ -611,6 +706,8 @@ func init() {
 	proto.RegisterType((*UpdateEventRequest)(nil), "UpdateEventRequest")
 	proto.RegisterType((*UpdateEventResponse)(nil), "UpdateEventResponse")
 	proto.RegisterType((*DeleteEventRequest)(nil), "DeleteEventRequest")
+	proto.RegisterType((*GetEventRequest)(nil), "GetEventRequest")
+	proto.RegisterType((*GetEventResponse)(nil), "GetEventResponse")
 	proto.RegisterType((*DeleteEventResponse)(nil), "DeleteEventResponse")
 	proto.RegisterType((*ListEventsRequest)(nil), "ListEventsRequest")
 	proto.RegisterType((*ListEventsResponse)(nil), "ListEventsResponse")
@@ -619,35 +716,36 @@ func init() {
 func init() { proto.RegisterFile("api/api.proto", fileDescriptor_1b40cafcd4234784) }
 
 var fileDescriptor_1b40cafcd4234784 = []byte{
-	// 439 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x93, 0xcd, 0x8e, 0xd3, 0x30,
-	0x10, 0x80, 0xe3, 0xb4, 0x09, 0xbb, 0x53, 0x01, 0x62, 0x12, 0xa1, 0x28, 0x07, 0xa8, 0x2c, 0x0e,
-	0x7b, 0x72, 0xa5, 0x02, 0x5a, 0xc1, 0x91, 0x05, 0x89, 0x03, 0xa7, 0x00, 0xda, 0x23, 0xca, 0x92,
-	0xa1, 0xb2, 0x94, 0x26, 0xc1, 0x76, 0x0b, 0x4f, 0x88, 0xc4, 0x0b, 0xf0, 0x38, 0x08, 0xc5, 0xee,
-	0x4f, 0x4a, 0x52, 0xfe, 0xc4, 0x65, 0x6f, 0x9d, 0xe9, 0x8c, 0x3d, 0xdf, 0xe7, 0x09, 0xdc, 0xcc,
-	0x1b, 0x39, 0xcb, 0x1b, 0x29, 0x1a, 0x55, 0x9b, 0x3a, 0xbd, 0xbf, 0xa8, 0xeb, 0x45, 0x49, 0x33,
-	0x1b, 0x5d, 0xad, 0x3e, 0xcc, 0x8c, 0x5c, 0x92, 0x36, 0xf9, 0xb2, 0x71, 0x05, 0xfc, 0x2b, 0x83,
-	0xe0, 0xc5, 0x9a, 0x2a, 0x83, 0xb7, 0xc0, 0x97, 0x45, 0xc2, 0xa6, 0xec, 0xec, 0x34, 0xf3, 0x65,
-	0x81, 0x31, 0x04, 0x46, 0x9a, 0x92, 0x12, 0xdf, 0xa6, 0x5c, 0x80, 0x08, 0x63, 0x43, 0x9f, 0x4d,
-	0x32, 0xb2, 0x49, 0xfb, 0xbb, 0xad, 0xac, 0x3f, 0x55, 0xa4, 0x92, 0xb1, 0xab, 0xb4, 0x01, 0x3e,
-	0x01, 0xd0, 0x26, 0x57, 0xe6, 0x5d, 0x7b, 0x65, 0x12, 0x4c, 0xd9, 0xd9, 0x64, 0x9e, 0x0a, 0x37,
-	0x8f, 0xd8, 0xce, 0x23, 0xde, 0x6c, 0xe7, 0xc9, 0x4e, 0x6d, 0x75, 0x1b, 0xe3, 0x63, 0x38, 0xa1,
-	0xaa, 0x70, 0x8d, 0xe1, 0x6f, 0x1b, 0x6f, 0x50, 0x55, 0xb4, 0x11, 0xff, 0xc2, 0x00, 0x2f, 0x14,
-	0xe5, 0x86, 0x2c, 0x51, 0x46, 0x1f, 0x57, 0xa4, 0xcd, 0x1e, 0x84, 0x0d, 0x81, 0xf8, 0x43, 0x20,
-	0xa3, 0xe3, 0x20, 0xe3, 0x7f, 0x05, 0x09, 0xfe, 0x1c, 0xe4, 0x12, 0xa2, 0x03, 0x0e, 0xdd, 0xd4,
-	0x95, 0x26, 0xbc, 0x07, 0x01, 0xb5, 0x09, 0x0b, 0x32, 0x99, 0x87, 0xc2, 0xfe, 0xfd, 0xd2, 0xcb,
-	0x5c, 0x1a, 0xef, 0x42, 0x40, 0x4a, 0xd5, 0xca, 0x31, 0xd9, 0x7c, 0x1b, 0x3e, 0x3b, 0x81, 0x50,
-	0x91, 0x5e, 0x95, 0x86, 0x7f, 0x63, 0x80, 0x6f, 0x9b, 0xe2, 0x67, 0x43, 0xd7, 0xff, 0xe9, 0x2f,
-	0x21, 0x3a, 0xe0, 0xfa, 0x6f, 0xc6, 0x1e, 0x00, 0x3e, 0xa7, 0x92, 0x7e, 0x2d, 0x8c, 0x9f, 0x43,
-	0x74, 0x50, 0xb5, 0xb9, 0x7e, 0x77, 0x3c, 0x3b, 0x76, 0x7c, 0x01, 0x77, 0x5e, 0x49, 0x6d, 0x6c,
-	0x9b, 0xee, 0x2c, 0xac, 0x93, 0xca, 0x8e, 0x4b, 0xf5, 0xff, 0x42, 0x2a, 0x7f, 0x04, 0xd8, 0xbd,
-	0x65, 0x27, 0x27, 0xb4, 0x16, 0x74, 0xc2, 0xa6, 0xa3, 0xbd, 0x9d, 0x6c, 0x93, 0x9d, 0x7f, 0x67,
-	0x70, 0xfb, 0x22, 0x2f, 0xa9, 0x2a, 0x72, 0xf5, 0x9a, 0xd4, 0x5a, 0xbe, 0x27, 0x7c, 0x0a, 0x93,
-	0xce, 0x66, 0x62, 0x24, 0xfa, 0xdf, 0x5b, 0x1a, 0x8b, 0x81, 0xe5, 0xe5, 0x5e, 0xdb, 0xdb, 0x91,
-	0x84, 0x91, 0xe8, 0x8b, 0x4d, 0x63, 0x31, 0xe0, 0xd1, 0xf5, 0x76, 0xde, 0x17, 0x23, 0xd1, 0xdf,
-	0xe2, 0x34, 0x16, 0x03, 0x2b, 0xc0, 0x3d, 0x3c, 0x07, 0xd8, 0xd3, 0x23, 0x8a, 0x9e, 0xf0, 0x34,
-	0x12, 0x7d, 0x3d, 0xdc, 0xbb, 0x0a, 0xad, 0xd5, 0x87, 0x3f, 0x02, 0x00, 0x00, 0xff, 0xff, 0xc5,
-	0x0c, 0x27, 0xfb, 0x54, 0x05, 0x00, 0x00,
+	// 463 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x53, 0x4d, 0x6f, 0xd3, 0x40,
+	0x10, 0xf5, 0x3a, 0x71, 0x48, 0x27, 0x82, 0xb6, 0xe3, 0x08, 0x59, 0x3e, 0x40, 0x58, 0x71, 0xe8,
+	0x69, 0x23, 0x02, 0xa8, 0x82, 0x23, 0x05, 0xc1, 0x81, 0x93, 0x29, 0xea, 0x11, 0xb9, 0x78, 0xa8,
+	0x56, 0x72, 0x6d, 0xb3, 0xbb, 0x29, 0xfc, 0x2c, 0x10, 0x7f, 0x80, 0x9f, 0x86, 0xbc, 0xdb, 0x34,
+	0x8e, 0xed, 0x96, 0x0f, 0xe5, 0xc2, 0xcd, 0x33, 0x9e, 0xb7, 0xf3, 0xe6, 0xcd, 0x1b, 0xb8, 0x9d,
+	0x56, 0x72, 0x9e, 0x56, 0x52, 0x54, 0xaa, 0x34, 0x65, 0x7c, 0xff, 0xac, 0x2c, 0xcf, 0x72, 0x9a,
+	0xdb, 0xe8, 0x74, 0xf9, 0x69, 0x6e, 0xe4, 0x39, 0x69, 0x93, 0x9e, 0x57, 0xae, 0x80, 0xff, 0x60,
+	0x10, 0xbc, 0xba, 0xa0, 0xc2, 0xe0, 0x1d, 0xf0, 0x65, 0x16, 0xb1, 0x19, 0x3b, 0xd8, 0x49, 0x7c,
+	0x99, 0xe1, 0x14, 0x02, 0x23, 0x4d, 0x4e, 0x91, 0x6f, 0x53, 0x2e, 0x40, 0x84, 0xa1, 0xa1, 0xaf,
+	0x26, 0x1a, 0xd8, 0xa4, 0xfd, 0xc6, 0x67, 0x00, 0xda, 0xa4, 0xca, 0x7c, 0xa8, 0x1f, 0x8f, 0x86,
+	0x33, 0x76, 0x30, 0x59, 0xc4, 0xc2, 0x75, 0x16, 0xab, 0xce, 0xe2, 0x78, 0xd5, 0x39, 0xd9, 0xb1,
+	0xd5, 0x75, 0x8c, 0x4f, 0x61, 0x4c, 0x45, 0xe6, 0x80, 0xc1, 0x6f, 0x81, 0xb7, 0xa8, 0xc8, 0xea,
+	0x88, 0x7f, 0x63, 0x80, 0x47, 0x8a, 0x52, 0x43, 0x96, 0x7b, 0x42, 0x9f, 0x97, 0xa4, 0xcd, 0x9a,
+	0x32, 0xeb, 0xa3, 0xec, 0x5f, 0x4b, 0x79, 0xf0, 0xaf, 0x94, 0x87, 0x7f, 0x4e, 0xf9, 0x04, 0xc2,
+	0x0d, 0xc6, 0xba, 0x2a, 0x0b, 0x4d, 0x78, 0x0f, 0x02, 0xaa, 0x13, 0x96, 0xf2, 0x64, 0x31, 0x12,
+	0xf6, 0xf7, 0x1b, 0x2f, 0x71, 0x69, 0xbc, 0x0b, 0x01, 0x29, 0x55, 0x2a, 0xc7, 0xde, 0xe6, 0xeb,
+	0xf0, 0xc5, 0x18, 0x46, 0x8a, 0xf4, 0x32, 0x37, 0xfc, 0x27, 0x03, 0x7c, 0x5f, 0x65, 0x6d, 0x2d,
+	0xfe, 0xa7, 0x75, 0x9e, 0x40, 0xb8, 0x31, 0xc1, 0xd6, 0xb4, 0x79, 0x08, 0xf8, 0x92, 0x72, 0xba,
+	0x59, 0x1a, 0xfe, 0x00, 0x76, 0x5f, 0x93, 0xb9, 0xb1, 0xe4, 0x18, 0xf6, 0xd6, 0x25, 0x5b, 0xa3,
+	0x77, 0x08, 0xe1, 0x06, 0xbd, 0xcb, 0x87, 0xaf, 0x80, 0xec, 0x3a, 0x60, 0x06, 0xfb, 0x6f, 0xa5,
+	0x76, 0x7c, 0x74, 0xc3, 0xfd, 0xe5, 0x97, 0x82, 0xd4, 0xca, 0xfd, 0x36, 0x68, 0x6d, 0xd3, 0xff,
+	0x8b, 0x6d, 0xf2, 0x27, 0x80, 0xcd, 0x2e, 0x57, 0x63, 0x8f, 0xec, 0x7c, 0x3a, 0x62, 0xb3, 0xc1,
+	0x7a, 0xee, 0xe4, 0x32, 0xbb, 0xf8, 0xee, 0xc3, 0xee, 0x51, 0x9a, 0x53, 0x91, 0xa5, 0xea, 0x1d,
+	0xa9, 0x0b, 0xf9, 0x91, 0xf0, 0x39, 0x4c, 0x1a, 0xe6, 0xc7, 0x50, 0x74, 0x8f, 0x37, 0x9e, 0x8a,
+	0x9e, 0xfb, 0xe0, 0x5e, 0x8d, 0x6d, 0x88, 0x84, 0xa1, 0xe8, 0x6e, 0x34, 0x9e, 0x8a, 0x1e, 0x1d,
+	0x1d, 0xb6, 0x61, 0x2c, 0x0c, 0x45, 0xf7, 0x50, 0xe2, 0xa9, 0xe8, 0xf1, 0x1e, 0xf7, 0xf0, 0x10,
+	0x60, 0x3d, 0x3d, 0xa2, 0xe8, 0x08, 0x1e, 0x87, 0xa2, 0x2b, 0x0f, 0xf7, 0xf0, 0x11, 0x8c, 0x57,
+	0x5e, 0xc1, 0x3d, 0xd1, 0x72, 0x56, 0xbc, 0x2f, 0xda, 0x46, 0xe2, 0xde, 0xe9, 0xc8, 0x2e, 0xe2,
+	0xf1, 0xaf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x66, 0xdc, 0xfd, 0xf1, 0xbe, 0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -666,6 +764,7 @@ type CalendarServiceClient interface {
 	DeleteEvent(ctx context.Context, in *DeleteEventRequest, opts ...grpc.CallOption) (*DeleteEventResponse, error)
 	UpdateEvent(ctx context.Context, in *UpdateEventRequest, opts ...grpc.CallOption) (*UpdateEventResponse, error)
 	ListEvents(ctx context.Context, in *ListEventsRequest, opts ...grpc.CallOption) (*ListEventsResponse, error)
+	GetEvent(ctx context.Context, in *GetEventRequest, opts ...grpc.CallOption) (*GetEventResponse, error)
 }
 
 type calendarServiceClient struct {
@@ -712,12 +811,22 @@ func (c *calendarServiceClient) ListEvents(ctx context.Context, in *ListEventsRe
 	return out, nil
 }
 
+func (c *calendarServiceClient) GetEvent(ctx context.Context, in *GetEventRequest, opts ...grpc.CallOption) (*GetEventResponse, error) {
+	out := new(GetEventResponse)
+	err := c.cc.Invoke(ctx, "/CalendarService/GetEvent", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CalendarServiceServer is the server API for CalendarService service.
 type CalendarServiceServer interface {
 	CreateEvent(context.Context, *CreateEventRequest) (*CreateEventResponse, error)
 	DeleteEvent(context.Context, *DeleteEventRequest) (*DeleteEventResponse, error)
 	UpdateEvent(context.Context, *UpdateEventRequest) (*UpdateEventResponse, error)
 	ListEvents(context.Context, *ListEventsRequest) (*ListEventsResponse, error)
+	GetEvent(context.Context, *GetEventRequest) (*GetEventResponse, error)
 }
 
 // UnimplementedCalendarServiceServer can be embedded to have forward compatible implementations.
@@ -735,6 +844,9 @@ func (*UnimplementedCalendarServiceServer) UpdateEvent(ctx context.Context, req 
 }
 func (*UnimplementedCalendarServiceServer) ListEvents(ctx context.Context, req *ListEventsRequest) (*ListEventsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListEvents not implemented")
+}
+func (*UnimplementedCalendarServiceServer) GetEvent(ctx context.Context, req *GetEventRequest) (*GetEventResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetEvent not implemented")
 }
 
 func RegisterCalendarServiceServer(s *grpc.Server, srv CalendarServiceServer) {
@@ -813,6 +925,24 @@ func _CalendarService_ListEvents_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CalendarService_GetEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetEventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CalendarServiceServer).GetEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/CalendarService/GetEvent",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CalendarServiceServer).GetEvent(ctx, req.(*GetEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _CalendarService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "CalendarService",
 	HandlerType: (*CalendarServiceServer)(nil),
@@ -832,6 +962,10 @@ var _CalendarService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListEvents",
 			Handler:    _CalendarService_ListEvents_Handler,
+		},
+		{
+			MethodName: "GetEvent",
+			Handler:    _CalendarService_GetEvent_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
