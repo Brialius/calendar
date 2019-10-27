@@ -101,9 +101,11 @@ func (pges *PgEventStorage) UpdateEventByIdOwner(ctx context.Context, id string,
 	query := `
 		UPDATE events SET title=$3, text=$4, start_time=$5, end_time=$6 WHERE id=$1 AND owner=$2
 `
-	_, err := pges.db.ExecContext(ctx, query, id, event.Owner, event.Title, event.Text, event.StartTime, event.EndTime)
-	if err != nil {
-		return err
+	res, err := pges.db.ExecContext(ctx, query, id, event.Owner, event.Title, event.Text, event.StartTime, event.EndTime)
+	if res != nil {
+		if c, _ := res.RowsAffected(); c == 0 {
+			return errors.ErrNotFound
+		}
 	}
-	return nil
+	return err
 }
