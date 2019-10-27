@@ -70,14 +70,18 @@ func (pges *PgEventStorage) GetEventsByOwnerStartDate(ctx context.Context, owner
 
 func (pges *PgEventStorage) GetEventsCountByOwnerStartDateEndDate(ctx context.Context, owner string, startTime, endTime *time.Time) (int, error) {
 	query := `
-		SELECT count(*) FROM events WHERE owner=$1 AND start_time>=$2 AND end_time<=$3
+SELECT count(*)
+FROM events
+WHERE owner = $1
+  AND (start_time BETWEEN $2 AND $3
+    OR end_time BETWEEN $2 AND $3)
 `
-	var eventsCount int
+	var eventsCount []int
 	err := pges.db.SelectContext(ctx, &eventsCount, query, owner, startTime, endTime)
 	if err != nil {
-		return eventsCount, err
+		return 0, err
 	}
-	return eventsCount, nil
+	return eventsCount[0], nil
 }
 
 func (pges *PgEventStorage) DeleteEventByIdOwner(ctx context.Context, id, owner string) error {

@@ -32,12 +32,12 @@ func (cs *CalendarServer) CreateEvent(ctx context.Context, req *CreateEventReque
 	st, err := ptypes.Timestamp(req.GetStartTime())
 	if err != nil {
 		log.Printf("start time is incorrect: %s", err)
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	et, err := ptypes.Timestamp(req.GetEndTime())
 	if err != nil {
 		log.Printf("end time is incorrect: %s", err)
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	event, err := cs.EventService.CreateEvent(ctx, owner, req.GetTitle(), req.GetText(), &st, &et)
 	if err != nil {
@@ -50,13 +50,13 @@ func (cs *CalendarServer) CreateEvent(ctx context.Context, req *CreateEventReque
 			}
 			return resp, nil
 		} else {
-			return nil, err
+			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
 	log.Printf("Event created: `%s` -  %s", req.GetTitle(), event.Id)
 	protoEvent, err := eventToProto(event)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	resp := &CreateEventResponse{
 		Result: &CreateEventResponse_Event{
@@ -74,10 +74,10 @@ func eventToProto(event *models.Event) (*Event, error) {
 	}
 	var err error
 	if protoEvent.StartTime, err = ptypes.TimestampProto(*event.StartTime); err != nil {
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	if protoEvent.EndTime, err = ptypes.TimestampProto(*event.EndTime); err != nil {
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	return protoEvent, nil
 }
@@ -100,7 +100,7 @@ func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *DeleteEventReque
 			return resp, nil
 		} else {
 			log.Printf("Error during event deletion: `%s` -  %s", req.GetId(), err)
-			return nil, err
+			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
 	if config.Verbose {
@@ -127,7 +127,7 @@ func (cs *CalendarServer) GetEvent(ctx context.Context, req *GetEventRequest) (*
 			return resp, nil
 		} else {
 			log.Printf("Error during getting event: `%s` -  %s", req.GetId(), err)
-			return nil, err
+			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
 	if config.Verbose {
@@ -135,7 +135,7 @@ func (cs *CalendarServer) GetEvent(ctx context.Context, req *GetEventRequest) (*
 	}
 	protoEvent, err := eventToProto(event)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return &GetEventResponse{
 		Result: &GetEventResponse_Event{Event: protoEvent},
@@ -149,13 +149,13 @@ func (cs *CalendarServer) ListEvents(ctx context.Context, req *ListEventsRequest
 	}
 	st, err := ptypes.Timestamp(req.GetStartTime())
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	log.Printf("Getting events list: Owner: `%s`, start date: %s ...", owner, st)
 	events, err := cs.EventService.ListEvents(ctx, owner, &st)
 	if err != nil {
 		log.Printf("Error during event list preparing for user: `%s` since:  %s - %s", owner, req.GetStartTime(), err)
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	log.Printf("Events list received for user: `%s` since:  %s", owner, st)
 	protoEvents := make([]*Event, 0, len(events))
@@ -178,7 +178,7 @@ func getOwner(ctx context.Context) (string, error) {
 			return o[0], nil
 		}
 	}
-	return "", status.Errorf(codes.PermissionDenied, "Not authorized")
+	return "", status.Errorf(codes.Unauthenticated, "Unauthenticated")
 }
 
 func (cs *CalendarServer) UpdateEvent(ctx context.Context, req *UpdateEventRequest) (*UpdateEventResponse, error) {
@@ -190,12 +190,12 @@ func (cs *CalendarServer) UpdateEvent(ctx context.Context, req *UpdateEventReque
 	st, err := ptypes.Timestamp(req.GetStartTime())
 	if err != nil {
 		log.Printf("start time is incorrect: %s", err)
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	et, err := ptypes.Timestamp(req.GetEndTime())
 	if err != nil {
 		log.Printf("end time is incorrect: %s", err)
-		return nil, err
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	event, err := cs.EventService.UpdateEvent(ctx, owner, req.GetTitle(), req.GetText(), req.GetId(), &st, &et)
 	if err != nil {
@@ -208,12 +208,12 @@ func (cs *CalendarServer) UpdateEvent(ctx context.Context, req *UpdateEventReque
 			}
 			return resp, nil
 		} else {
-			return nil, err
+			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
 	protoEvent, err := eventToProto(event)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	resp := &UpdateEventResponse{
 		Result: &UpdateEventResponse_Event{

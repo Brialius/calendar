@@ -31,7 +31,7 @@ func runCreateRequest(ctx context.Context) {
 	if isAbsentParam {
 		log.Fatal("Some parameters is not set")
 	}
-	st, err := grpcConfig.GetEndTime()
+	st, err := grpcConfig.GetStartTime()
 	if err != nil {
 		log.Fatal(err)
 	}
