@@ -50,7 +50,7 @@ generate:
 	protoc --go_out=plugins=grpc:internal/grpc api/api.proto -I $(IMPORT_PATH) -I .
 
 .PHONY: build
-build: generate mod-refresh ## Build a version
+build: mod-refresh ## Build a version
 	go build $(BUILDFLAGS) -o $(BIN)
 
 .PHONY: install
