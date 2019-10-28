@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS owner_start_time_idx;
