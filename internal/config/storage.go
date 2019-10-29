@@ -12,7 +12,7 @@ type StorageConfig struct {
 
 func GetStorageConfig() *StorageConfig {
 	log.Println("Configuring storage...")
-	viper.SetDefault("dsn", "host=127.0.0.1 user=event_user password=event_pwd dbname=event_db")
+	viper.SetDefault("dsn", "host=127.0.0.1 user=event_user password=event-super-password dbname=event_db")
 	viper.SetDefault("storage", "pg")
 	return newDbConfig()
 }
