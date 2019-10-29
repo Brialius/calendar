@@ -60,6 +60,7 @@ var NotificatorCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer storage.Close(ctx)
 
 		nt := constructNotificator(storage, tq, 24*time.Hour, "notification.tasks")
 		go func() {

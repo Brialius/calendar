@@ -129,3 +129,7 @@ func (pges *PgEventStorage) MarkEventNotified(ctx context.Context, id string) er
 	_, err := pges.db.ExecContext(ctx, query, id)
 	return err
 }
+
+func (pges *PgEventStorage) Close(ctx context.Context) {
+	_ = pges.db.Close()
+}

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"github.com/Brialius/calendar/internal/config"
 	"github.com/Brialius/calendar/internal/domain/interfaces"
@@ -62,6 +63,8 @@ var GrpcServerCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer storage.Close(context.Background())
+
 		server, err := constructGrpcServer(storage)
 		if err != nil {
 			log.Fatal(err)

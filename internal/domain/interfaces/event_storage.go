@@ -15,4 +15,5 @@ type EventStorage interface {
 	DeleteEventByIdOwner(ctx context.Context, id, owner string) error
 	UpdateEventByIdOwner(ctx context.Context, id string, event *models.Event) error
 	MarkEventNotified(ctx context.Context, id string) error
+	Close(ctx context.Context)
 }
