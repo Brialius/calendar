@@ -70,7 +70,7 @@ var NotificatorCmd = &cobra.Command{
 			log.Printf("Interrupt signal")
 			cancel()
 		}()
-		err = nt.Serve(ctx)
+		err = nt.ServeNotificator(ctx)
 		if err != nil {
 			log.Fatal(err)
 		}

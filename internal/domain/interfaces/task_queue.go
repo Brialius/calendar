@@ -9,5 +9,5 @@ type TaskQueue interface {
 	DeclareQueue(ctx context.Context, qName string, durable bool) error
 	SetQos(ctx context.Context, prefetchCount, prefetchSize int, global bool) error
 	SendTaskToQueue(ctx context.Context, qName string, event *models.Event) error
-	ConsumeTasksFromQueue(ctx context.Context, qName, consumer string, autoAck bool, task func(event *models.Event) error) error
+	ConsumeTasksFromQueue(ctx context.Context, qName, consumer string, autoAck bool, task func(ctx context.Context, event *models.Event) error) error
 }

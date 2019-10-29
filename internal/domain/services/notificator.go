@@ -35,7 +35,7 @@ func (n *NotificatorService) ScanEvents(ctx context.Context) error {
 	return nil
 }
 
-func (n *NotificatorService) Serve(ctx context.Context) error {
+func (n *NotificatorService) ServeNotificator(ctx context.Context) error {
 	err := n.TaskQueue.DeclareQueue(ctx, n.QName, true)
 	if err != nil {
 		log.Printf("can't declare task quueue `%s`: %s", n.QName, err)

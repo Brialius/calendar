@@ -64,7 +64,7 @@ func (r *RabbitMq) SendTaskToQueue(ctx context.Context, qName string, event *mod
 		})
 }
 
-func (r *RabbitMq) ConsumeTasksFromQueue(ctx context.Context, qName, consumer string, autoAck bool, task func(event *models.Event) error) error {
+func (r *RabbitMq) ConsumeTasksFromQueue(ctx context.Context, qName, consumer string, autoAck bool, task func(ctx context.Context, event *models.Event) error) error {
 	msgs, err := r.ch.Consume(
 		qName,
 		consumer,
@@ -81,13 +81,13 @@ func (r *RabbitMq) ConsumeTasksFromQueue(ctx context.Context, qName, consumer st
 	forever := make(chan bool)
 	go func() {
 		for d := range msgs {
-			var event *models.Event
+			e := &models.Event{}
 			log.Printf("Received a message: %s", d.Body)
-			err = json.Unmarshal(d.Body, event)
+			err = json.Unmarshal(d.Body, e)
 			if err != nil {
-				log.Printf("can't marshal to JSON  `%v`: %s", event, err)
+				log.Printf("can't marshal to JSON  `%v`: %s", e, err)
 			}
-			if task(event) == nil {
+			if task(ctx, e) == nil {
 				_ = d.Ack(false)
 			}
 		}

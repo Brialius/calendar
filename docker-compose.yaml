@@ -56,6 +56,18 @@ services:
     command: "/app/calendar nt"
     restart: on-failure
 
+  sender-service:
+    container_name: calendar-sender-service
+    build: .
+    image: calendar
+    depends_on:
+      - rabbit
+    environment:
+      AMQP-URL: "amqp://queue_user:queue-super-password@rabbit:5672/"
+      VERBOSE: "true"
+    command: "/app/calendar sn"
+    restart: on-failure
+
   migrations:
     image: migrate/migrate
     volumes:
