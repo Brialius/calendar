@@ -5,7 +5,7 @@ import (
 	"github.com/Brialius/calendar/internal/config"
 	"github.com/Brialius/calendar/internal/domain/interfaces"
 	"github.com/Brialius/calendar/internal/domain/services"
-	"github.com/Brialius/calendar/internal/grpc/api"
+	"github.com/Brialius/calendar/internal/grpc"
 	"github.com/Brialius/calendar/internal/maindb"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -13,11 +13,11 @@ import (
 	"log"
 )
 
-func construct(eventStorage interfaces.EventStorage) (*api.CalendarServer, error) {
+func constructGrpcServer(eventStorage interfaces.EventStorage) (*grpc.CalendarServer, error) {
 	eventService := &services.EventService{
 		EventStorage: eventStorage,
 	}
-	server := &api.CalendarServer{
+	server := &grpc.CalendarServer{
 		EventService: eventService,
 	}
 	return server, nil
@@ -62,7 +62,7 @@ var GrpcServerCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		server, err := construct(storage)
+		server, err := constructGrpcServer(storage)
 		if err != nil {
 			log.Fatal(err)
 		}

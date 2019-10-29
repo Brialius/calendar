@@ -1,4 +1,4 @@
-package api
+package grpc
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	"github.com/Brialius/calendar/internal/domain/errors"
 	"github.com/Brialius/calendar/internal/domain/models"
 	"github.com/Brialius/calendar/internal/domain/services"
+	"github.com/Brialius/calendar/internal/grpc/api"
 	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -23,7 +24,7 @@ type CalendarServer struct {
 }
 
 // implements CalendarServiceServer
-func (cs *CalendarServer) CreateEvent(ctx context.Context, req *CreateEventRequest) (*CreateEventResponse, error) {
+func (cs *CalendarServer) CreateEvent(ctx context.Context, req *api.CreateEventRequest) (*api.CreateEventResponse, error) {
 	log.Printf("Creating new event: `%s`...", req.GetTitle())
 	owner, err := getOwner(ctx)
 	if err != nil {
@@ -43,8 +44,8 @@ func (cs *CalendarServer) CreateEvent(ctx context.Context, req *CreateEventReque
 	if err != nil {
 		log.Printf("Error during event creation: `%s` -  %s", req.GetTitle(), err)
 		if berr, ok := err.(errors.EventError); ok {
-			resp := &CreateEventResponse{
-				Result: &CreateEventResponse_Error{
+			resp := &api.CreateEventResponse{
+				Result: &api.CreateEventResponse_Error{
 					Error: string(berr),
 				},
 			}
@@ -58,16 +59,16 @@ func (cs *CalendarServer) CreateEvent(ctx context.Context, req *CreateEventReque
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	resp := &CreateEventResponse{
-		Result: &CreateEventResponse_Event{
+	resp := &api.CreateEventResponse{
+		Result: &api.CreateEventResponse_Event{
 			Event: protoEvent,
 		},
 	}
 	return resp, nil
 }
 
-func eventToProto(event *models.Event) (*Event, error) {
-	protoEvent := &Event{
+func eventToProto(event *models.Event) (*api.Event, error) {
+	protoEvent := &api.Event{
 		Id:    event.Id.String(),
 		Title: event.Title,
 		Text:  event.Text,
@@ -82,7 +83,7 @@ func eventToProto(event *models.Event) (*Event, error) {
 	return protoEvent, nil
 }
 
-func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *DeleteEventRequest) (*DeleteEventResponse, error) {
+func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *api.DeleteEventRequest) (*api.DeleteEventResponse, error) {
 	log.Printf("Deleting event: `%s`...", req.GetId())
 	owner, err := getOwner(ctx)
 	if err != nil {
@@ -92,8 +93,8 @@ func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *DeleteEventReque
 	if err != nil {
 		if berr, ok := err.(errors.EventError); ok {
 			log.Printf("Error during event deletion: `%s` -  %s", req.GetId(), berr)
-			resp := &DeleteEventResponse{
-				Result: &DeleteEventResponse_Error{
+			resp := &api.DeleteEventResponse{
+				Result: &api.DeleteEventResponse_Error{
 					Error: string(berr),
 				},
 			}
@@ -106,10 +107,10 @@ func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *DeleteEventReque
 	if config.Verbose {
 		log.Printf("Event Deleted: `%s`", req.GetId())
 	}
-	return &DeleteEventResponse{}, nil
+	return &api.DeleteEventResponse{}, nil
 }
 
-func (cs *CalendarServer) GetEvent(ctx context.Context, req *GetEventRequest) (*GetEventResponse, error) {
+func (cs *CalendarServer) GetEvent(ctx context.Context, req *api.GetEventRequest) (*api.GetEventResponse, error) {
 	log.Printf("Getting event: `%s`...", req.GetId())
 	owner, err := getOwner(ctx)
 	if err != nil {
@@ -119,8 +120,8 @@ func (cs *CalendarServer) GetEvent(ctx context.Context, req *GetEventRequest) (*
 	if err != nil {
 		if berr, ok := err.(errors.EventError); ok {
 			log.Printf("Error during getting event: `%s` -  %s", req.GetId(), berr)
-			resp := &GetEventResponse{
-				Result: &GetEventResponse_Error{
+			resp := &api.GetEventResponse{
+				Result: &api.GetEventResponse_Error{
 					Error: string(berr),
 				},
 			}
@@ -137,12 +138,12 @@ func (cs *CalendarServer) GetEvent(ctx context.Context, req *GetEventRequest) (*
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	return &GetEventResponse{
-		Result: &GetEventResponse_Event{Event: protoEvent},
+	return &api.GetEventResponse{
+		Result: &api.GetEventResponse_Event{Event: protoEvent},
 	}, nil
 }
 
-func (cs *CalendarServer) ListEvents(ctx context.Context, req *ListEventsRequest) (*ListEventsResponse, error) {
+func (cs *CalendarServer) ListEvents(ctx context.Context, req *api.ListEventsRequest) (*api.ListEventsResponse, error) {
 	owner, err := getOwner(ctx)
 	if err != nil {
 		return nil, err
@@ -158,7 +159,7 @@ func (cs *CalendarServer) ListEvents(ctx context.Context, req *ListEventsRequest
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	log.Printf("Events list received for user: `%s` since:  %s", owner, st)
-	protoEvents := make([]*Event, 0, len(events))
+	protoEvents := make([]*api.Event, 0, len(events))
 	for _, e := range events {
 		protoEvent, err := eventToProto(e)
 		if err != nil {
@@ -166,7 +167,7 @@ func (cs *CalendarServer) ListEvents(ctx context.Context, req *ListEventsRequest
 		}
 		protoEvents = append(protoEvents, protoEvent)
 	}
-	resp := &ListEventsResponse{
+	resp := &api.ListEventsResponse{
 		Events: protoEvents,
 	}
 	return resp, nil
@@ -181,7 +182,7 @@ func getOwner(ctx context.Context) (string, error) {
 	return "", status.Errorf(codes.Unauthenticated, "Unauthenticated")
 }
 
-func (cs *CalendarServer) UpdateEvent(ctx context.Context, req *UpdateEventRequest) (*UpdateEventResponse, error) {
+func (cs *CalendarServer) UpdateEvent(ctx context.Context, req *api.UpdateEventRequest) (*api.UpdateEventResponse, error) {
 	log.Printf("Updating event: `%s`...", req.GetId())
 	owner, err := getOwner(ctx)
 	if err != nil {
@@ -201,8 +202,8 @@ func (cs *CalendarServer) UpdateEvent(ctx context.Context, req *UpdateEventReque
 	if err != nil {
 		log.Printf("Error during event creation: `%s` -  %s", req.GetTitle(), err)
 		if berr, ok := err.(errors.EventError); ok {
-			resp := &UpdateEventResponse{
-				Result: &UpdateEventResponse_Error{
+			resp := &api.UpdateEventResponse{
+				Result: &api.UpdateEventResponse_Error{
 					Error: string(berr),
 				},
 			}
@@ -215,8 +216,8 @@ func (cs *CalendarServer) UpdateEvent(ctx context.Context, req *UpdateEventReque
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	resp := &UpdateEventResponse{
-		Result: &UpdateEventResponse_Event{
+	resp := &api.UpdateEventResponse{
+		Result: &api.UpdateEventResponse_Event{
 			Event: protoEvent,
 		},
 	}
@@ -237,6 +238,6 @@ func (cs *CalendarServer) Serve(addr string) error {
 	if err != nil {
 		return err
 	}
-	RegisterCalendarServiceServer(s, cs)
+	api.RegisterCalendarServiceServer(s, cs)
 	return s.Serve(l)
 }
