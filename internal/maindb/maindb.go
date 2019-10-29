@@ -68,6 +68,18 @@ func (pges *PgEventStorage) GetEventsByOwnerStartDate(ctx context.Context, owner
 	return events, nil
 }
 
+func (pges *PgEventStorage) GetEventsForNotification(ctx context.Context, startTime time.Time, period time.Duration) ([]*models.Event, error) {
+	query := `
+		SELECT * FROM events WHERE start_time<=$1 AND notified = false
+`
+	var events []*models.Event
+	err := pges.db.SelectContext(ctx, &events, query, startTime.Add(period))
+	if err != nil {
+		return nil, err
+	}
+	return events, nil
+}
+
 func (pges *PgEventStorage) GetEventsCountByOwnerStartDateEndDate(ctx context.Context, owner string, startTime, endTime *time.Time) (int, error) {
 	query := `
 SELECT count(*)
@@ -107,5 +119,13 @@ func (pges *PgEventStorage) UpdateEventByIdOwner(ctx context.Context, id string,
 			return errors.ErrNotFound
 		}
 	}
+	return err
+}
+
+func (pges *PgEventStorage) MarkEventNotified(ctx context.Context, id string) error {
+	query := `
+		UPDATE events SET notified=true WHERE id=$1
+`
+	_, err := pges.db.ExecContext(ctx, query, id)
 	return err
 }

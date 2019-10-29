@@ -5,6 +5,7 @@ services:
     image: rabbitmq:3.7-management
     ports:
       - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: "queue_user"
       RABBITMQ_DEFAULT_PASS: "queue-super-password"
@@ -37,6 +38,21 @@ services:
       STORAGE: "pg"
       VERBOSE: "true"
     command: "/app/calendar gs"
+
+  notificator-service:
+    container_name: calendar-notificator-service
+    build: .
+    image: calendar
+    depends_on:
+      - postgres
+      - migrations
+      - rabbit
+    environment:
+      DSN: "host=postgres user=event_user password=event-super-password dbname=event_db"
+      STORAGE: "pg"
+      AMQP-URL: "amqp://queue_user:queue-super-password@rabbit:5672/"
+      VERBOSE: "true"
+    command: "/app/calendar nt"
 
   migrations:
     image: migrate/migrate
