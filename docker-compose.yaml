@@ -53,6 +53,7 @@ services:
       AMQP-URL: "amqp://queue_user:queue-super-password@rabbit:5672/"
       VERBOSE: "true"
     command: "/app/calendar nt"
+    restart: on-failure
 
   migrations:
     image: migrate/migrate

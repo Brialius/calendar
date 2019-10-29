@@ -11,12 +11,12 @@ type MqConfig struct {
 
 func GetMqConfig() *MqConfig {
 	log.Println("Configuring message queue broker...")
-	viper.SetDefault("url", "amqp://queue_user:queue-super-password@localhost:5672/")
+	viper.SetDefault("amqp-url", "amqp://queue_user:queue-super-password@localhost:5672/")
 	return newMqrConfig()
 }
 
 func newMqrConfig() *MqConfig {
 	return &MqConfig{
-		Url: viper.GetString("url"),
+		Url: viper.GetString("amqp-url"),
 	}
 }
