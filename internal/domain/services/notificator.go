@@ -15,16 +15,6 @@ type NotificatorService struct {
 }
 
 func (n *NotificatorService) ScanEvents(ctx context.Context) error {
-	err := n.TaskQueue.DeclareQueue(ctx, n.QName, true)
-	if err != nil {
-		log.Printf("can't declare task quueue `%s`: %s", n.QName, err)
-		return err
-	}
-	err = n.TaskQueue.SetQos(ctx, 1, 0, false)
-	if err != nil {
-		log.Printf("can't set QoS for MQ channel: %s", err)
-		return err
-	}
 	events, err := n.EventStorage.GetEventsForNotification(ctx, time.Now(), n.Period)
 	if err != nil {
 		log.Printf("can't get events for notifications for period `%s`: %s", n.Period, err)
@@ -32,6 +22,7 @@ func (n *NotificatorService) ScanEvents(ctx context.Context) error {
 	}
 
 	for _, e := range events {
+		log.Printf("sending notification to `%s` about event `%s`", e.Owner, e.Id)
 		err = n.TaskQueue.SendTaskToQueue(ctx, n.QName, e)
 		if err != nil {
 			log.Printf("can't publish notification to task queue: %s", err)
@@ -46,6 +37,16 @@ func (n *NotificatorService) ScanEvents(ctx context.Context) error {
 }
 
 func (n *NotificatorService) Serve(ctx context.Context) error {
+	err := n.TaskQueue.DeclareQueue(ctx, n.QName, true)
+	if err != nil {
+		log.Printf("can't declare task quueue `%s`: %s", n.QName, err)
+		return err
+	}
+	err = n.TaskQueue.SetQos(ctx, 1, 0, false)
+	if err != nil {
+		log.Printf("can't set QoS for MQ channel: %s", err)
+		return err
+	}
 	tick := time.Tick(5 * time.Second)
 	for {
 		<-tick
