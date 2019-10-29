@@ -56,9 +56,8 @@ func (cs *CalendarServer) CreateEvent(ctx context.Context, req *api.CreateEventR
 				},
 			}
 			return resp, nil
-		} else {
-			return nil, status.Error(codes.Internal, err.Error())
 		}
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	log.Printf("Event created: `%s` -  %s", req.GetTitle(), event.Id)
 	protoEvent, err := eventToProto(event)
@@ -105,10 +104,10 @@ func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *api.DeleteEventR
 				},
 			}
 			return resp, nil
-		} else {
-			log.Printf("Error during event deletion: `%s` -  %s", req.GetId(), err)
-			return nil, status.Error(codes.Internal, err.Error())
 		}
+		log.Printf("Error during event deletion: `%s` -  %s", req.GetId(), err)
+		return nil, status.Error(codes.Internal, err.Error())
+
 	}
 	if config.Verbose {
 		log.Printf("Event Deleted: `%s`", req.GetId())
@@ -132,10 +131,9 @@ func (cs *CalendarServer) GetEvent(ctx context.Context, req *api.GetEventRequest
 				},
 			}
 			return resp, nil
-		} else {
-			log.Printf("Error during getting event: `%s` -  %s", req.GetId(), err)
-			return nil, status.Error(codes.Internal, err.Error())
 		}
+		log.Printf("Error during getting event: `%s` -  %s", req.GetId(), err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if config.Verbose {
 		log.Printf("Event received: `%s`", req.GetId())
@@ -214,9 +212,8 @@ func (cs *CalendarServer) UpdateEvent(ctx context.Context, req *api.UpdateEventR
 				},
 			}
 			return resp, nil
-		} else {
-			return nil, status.Error(codes.Internal, err.Error())
 		}
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	protoEvent, err := eventToProto(event)
 	if err != nil {
