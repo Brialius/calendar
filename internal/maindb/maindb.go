@@ -45,13 +45,13 @@ func (pges *PgEventStorage) GetEventByIdOwner(ctx context.Context, id, owner str
 	query := `
 		SELECT * FROM events WHERE id=$1 AND owner=$2
 `
-	var events []*models.Event
-	err := pges.db.SelectContext(ctx, &events, query, id, owner)
+	var event *models.Event
+	err := pges.db.GetContext(ctx, &event, query, id, owner)
 	if err != nil {
 		return nil, err
 	}
-	if len(events) == 1 {
-		return events[0], nil
+	if event != nil {
+		return event, nil
 	}
 	return nil, errors.ErrNotFound
 }
@@ -88,12 +88,12 @@ WHERE owner = $1
   AND (start_time BETWEEN $2 AND $3
     OR end_time BETWEEN $2 AND $3)
 `
-	var eventsCount []int
-	err := pges.db.SelectContext(ctx, &eventsCount, query, owner, startTime, endTime)
+	var eventsCount int
+	err := pges.db.GetContext(ctx, &eventsCount, query, owner, startTime, endTime)
 	if err != nil {
 		return 0, err
 	}
-	return eventsCount[0], nil
+	return eventsCount, nil
 }
 
 func (pges *PgEventStorage) DeleteEventByIdOwner(ctx context.Context, id, owner string) error {
