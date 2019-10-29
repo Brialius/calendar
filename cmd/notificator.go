@@ -9,13 +9,19 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
-func constructNotificator(storage interfaces.EventStorage, taskQueue interfaces.TaskQueue) *services.NotificatorService {
+func constructNotificator(storage interfaces.EventStorage, taskQueue interfaces.TaskQueue,
+	period time.Duration, qName string) *services.NotificatorService {
 	return &services.NotificatorService{
 		EventStorage: storage,
 		TaskQueue:    taskQueue,
+		Period:       period,
+		QName:        qName,
 	}
 }
 
@@ -25,7 +31,7 @@ var NotificatorCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		mqConf := config.GetMqConfig()
 		storageConfig := config.GetStorageConfig()
-		ctx := context.Background()
+		ctx, cancel := context.WithCancel(context.Background())
 
 		var isAbsentParam bool
 		if mqConf.Url == "" {
@@ -55,8 +61,15 @@ var NotificatorCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 
-		nt := constructNotificator(storage, tq)
-		err = nt.ScanEvents(ctx, 24*time.Hour, "notification.tasks")
+		nt := constructNotificator(storage, tq, 24*time.Hour, "notification.tasks")
+		go func() {
+			stop := make(chan os.Signal, 1)
+			signal.Notify(stop, os.Interrupt, syscall.SIGINT)
+			<-stop
+			log.Printf("Interrupt signal")
+			cancel()
+		}()
+		err = nt.Serve(ctx)
 		if err != nil {
 			log.Fatal(err)
 		}

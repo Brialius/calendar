@@ -38,6 +38,7 @@ services:
       STORAGE: "pg"
       VERBOSE: "true"
     command: "/app/calendar gs"
+    restart: on-failure
 
   notificator-service:
     container_name: calendar-notificator-service
@@ -62,3 +63,4 @@ services:
     command: -path /migrations/ -database postgres://event_user:event-super-password@postgres:5432/event_db?sslmode=disable up
     depends_on:
       - postgres
+    restart: on-failure:10
