@@ -40,7 +40,13 @@ func (cs *CalendarServer) CreateEvent(ctx context.Context, req *api.CreateEventR
 		log.Printf("end time is incorrect: %s", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	event, err := cs.EventService.CreateEvent(ctx, owner, req.GetTitle(), req.GetText(), &st, &et)
+	event, err := cs.EventService.CreateEvent(ctx, &models.Event{
+		Owner:     owner,
+		Title:     req.GetTitle(),
+		Text:      req.GetText(),
+		StartTime: &st,
+		EndTime:   &et,
+	})
 	if err != nil {
 		log.Printf("Error during event creation: `%s` -  %s", req.GetTitle(), err)
 		if berr, ok := err.(errors.EventError); ok {

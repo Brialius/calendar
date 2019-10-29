@@ -14,23 +14,17 @@ type EventService struct {
 	EventStorage interfaces.EventStorage
 }
 
-func (es *EventService) CreateEvent(ctx context.Context, owner, title, text string, startTime, endTime *time.Time) (*models.Event, error) {
-	event := &models.Event{
-		Id:        uuid.NewV4(),
-		Owner:     owner,
-		Title:     title,
-		Text:      text,
-		StartTime: startTime,
-		EndTime:   endTime,
-	}
-	count, err := es.EventStorage.GetEventsCountByOwnerStartDateEndDate(ctx, owner, startTime, endTime)
+func (es *EventService) CreateEvent(ctx context.Context, event *models.Event) (*models.Event, error) {
+	event.Id = uuid.NewV4()
+
+	count, err := es.EventStorage.GetEventsCountByOwnerStartDateEndDate(ctx, event.Owner, event.StartTime, event.EndTime)
 	if err != nil {
 		return nil, err
 	}
 	if count > 0 {
 		return nil, errors.ErrOverlaping
 	}
-	if startTime.After(*endTime) {
+	if event.StartTime.After(*event.EndTime) {
 		return nil, errors.ErrIncorrectEndDate
 	}
 	err = es.EventStorage.SaveEvent(ctx, event)
