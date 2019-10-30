@@ -85,7 +85,7 @@ func (r *RabbitMq) ConsumeTasksFromQueue(ctx context.Context, qName, consumer st
 			log.Printf("Received a message: %s", d.Body)
 			err = json.Unmarshal(d.Body, e)
 			if err != nil {
-				log.Printf("can't marshal to JSON  `%v`: %s", e, err)
+				log.Printf("can't unmarshal from JSON  `%v`: %s", e, err)
 			}
 			if task(ctx, e) == nil {
 				_ = d.Ack(false)
