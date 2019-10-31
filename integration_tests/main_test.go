@@ -123,17 +123,45 @@ func (a *apiStruct) iUpdateCreatedEvent(eventJSON *gherkin.DocString) error {
 	return nil
 }
 
+func (a *apiStruct) iDeleteEventByPreviousId() (err error) {
+	a.deleteResponse, err = a.apiCli.DeleteEvent(ctx, &api.DeleteEventRequest{
+		Id: a.eventToVerify.Id,
+	})
+	if err != nil {
+		return err
+	}
+	if errResponce := a.deleteResponse.GetError(); errResponce != "" {
+		return errors.New(errResponce)
+	}
+	return
+}
+
+func (a *apiStruct) eventByPreviousIdShouldBeAbsent() (err error) {
+	a.getResponse, err = a.apiCli.GetEvent(ctx, &api.GetEventRequest{
+		Id: a.eventToVerify.Id,
+	})
+	if err != nil {
+		return err
+	}
+	if errResponce := a.getResponse.GetError(); errResponce != "event not found" {
+		return errors.New("event exists")
+	}
+	return
+}
+
 func FeatureContext(s *godog.Suite) {
 	a := &apiStruct{}
-	//s.BeforeScenario(func(interface{}) {
-	//	a = &apiStruct{}
-	//})
+	s.BeforeScenario(func(interface{}) {
+		a = &apiStruct{}
+	})
 	s.Step(`^there is user "([^"]*)"$`, a.thereIsUser)
 	s.Step(`^there is server "([^"]*)"$`, a.thereIsServer)
 	s.Step(`^I create event$`, a.iCreateEvent)
 	s.Step(`^I get event by previous id$`, a.iGetEventById)
 	s.Step(`^Events should be the same$`, a.eventsShouldBeTheSame)
 	s.Step(`^I update created event$`, a.iUpdateCreatedEvent)
+	s.Step(`^I delete event by previous id$`, a.iDeleteEventByPreviousId)
+	s.Step(`^Event by previous id should be absent$`, a.eventByPreviousIdShouldBeAbsent)
 }
 
 var opt = godog.Options{
