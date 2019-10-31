@@ -12,6 +12,7 @@ type NotificatorService struct {
 	TaskQueue    interfaces.TaskQueue
 	Period       time.Duration
 	QName        string
+	Exchange     string
 }
 
 func (n *NotificatorService) ScanEvents(ctx context.Context) error {
@@ -23,7 +24,7 @@ func (n *NotificatorService) ScanEvents(ctx context.Context) error {
 
 	for _, e := range events {
 		log.Printf("sending notification to `%s` about event `%s`", e.Owner, e.Id)
-		if n.TaskQueue.SendTaskToQueue(ctx, n.QName, e) != nil {
+		if n.TaskQueue.SendTaskToQueue(ctx, n.Exchange, n.QName, e) != nil {
 			log.Printf("can't publish notification to task queue: %s", err)
 			break
 		}
@@ -36,9 +37,19 @@ func (n *NotificatorService) ScanEvents(ctx context.Context) error {
 }
 
 func (n *NotificatorService) ServeNotificator(ctx context.Context) error {
-	err := n.TaskQueue.DeclareQueue(ctx, n.QName, true)
+	err := n.TaskQueue.DeclareQueue(ctx, n.QName, false)
 	if err != nil {
 		log.Printf("can't declare task quueue `%s`: %s", n.QName, err)
+		return err
+	}
+	err = n.TaskQueue.DeclareExchange(ctx, n.Exchange, "fanout", true)
+	if err != nil {
+		log.Printf("can't declare task exchange `%s`: %s", n.Exchange, err)
+		return err
+	}
+	err = n.TaskQueue.BindQueue(ctx, n.QName, n.QName, n.Exchange, false)
+	if err != nil {
+		log.Printf("can't declare task exchange `%s`: %s", n.Exchange, err)
 		return err
 	}
 	err = n.TaskQueue.SetQos(ctx, 1, 0, false)

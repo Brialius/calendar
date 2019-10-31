@@ -5,7 +5,6 @@ import (
 	"github.com/Brialius/calendar/internal/domain/interfaces"
 	"github.com/Brialius/calendar/internal/domain/models"
 	"log"
-	"time"
 )
 
 type SenderService struct {
@@ -21,12 +20,9 @@ func (s *SenderService) SendNotification(ctx context.Context, event *models.Even
 }
 
 func (s *SenderService) Serve(ctx context.Context) error {
-	tick := time.Tick(5 * time.Second)
-	for {
-		<-tick
-		err := s.TaskQueue.ConsumeTasksFromQueue(ctx, s.QName, "", false, s.SendNotification)
-		if err != nil {
-			log.Printf("Can't send notification: %s", err)
-		}
+	err := s.TaskQueue.ConsumeTasksFromQueue(ctx, s.QName, "", false, s.SendNotification)
+	if err != nil {
+		log.Printf("Can't send notification: %s", err)
 	}
+	return nil
 }

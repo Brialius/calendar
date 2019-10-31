@@ -71,7 +71,7 @@ func (es *EventService) UpdateEvent(ctx context.Context, owner, title, text, id 
 		StartTime: startTime,
 		EndTime:   endTime,
 	}
-	err = es.EventStorage.SaveEvent(ctx, event)
+	err = es.EventStorage.UpdateEventByIdOwner(ctx, id, event)
 	if err != nil {
 		log.Printf("can't update event `%s`: %s", id, err)
 		return nil, err

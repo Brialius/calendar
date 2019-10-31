@@ -39,6 +39,30 @@ func (r *RabbitMq) DeclareQueue(ctx context.Context, qName string, durable bool)
 	return err
 }
 
+func (r *RabbitMq) BindQueue(ctx context.Context, qName, routingKey, exchange string, durable bool) error {
+	err := r.ch.QueueBind(
+		qName,
+		routingKey,
+		exchange,
+		false,
+		nil,
+	)
+	return err
+}
+
+func (r *RabbitMq) DeclareExchange(ctx context.Context, name, kind string, durable bool) error {
+	err := r.ch.ExchangeDeclare(
+		name,
+		kind,
+		durable,
+		false,
+		false,
+		false,
+		nil,
+	)
+	return err
+}
+
 func (r *RabbitMq) SetQos(ctx context.Context, prefetchCount, prefetchSize int, global bool) error {
 	return r.ch.Qos(
 		prefetchCount,
@@ -47,15 +71,15 @@ func (r *RabbitMq) SetQos(ctx context.Context, prefetchCount, prefetchSize int, 
 	)
 }
 
-func (r *RabbitMq) SendTaskToQueue(ctx context.Context, qName string, event *models.Event) error {
+func (r *RabbitMq) SendTaskToQueue(ctx context.Context, exchange, routingKey string, event *models.Event) error {
 	jsonBody, err := json.Marshal(event)
 	if err != nil {
 		log.Printf("can't marshal to JSON  `%v`: %s", event, err)
 		return err
 	}
 	return r.ch.Publish(
-		"",
-		qName,
+		exchange,
+		routingKey,
 		false,
 		false,
 		amqp.Publishing{

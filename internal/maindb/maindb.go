@@ -2,6 +2,7 @@ package maindb
 
 import (
 	"context"
+	"database/sql"
 	"github.com/Brialius/calendar/internal/domain/errors"
 	"github.com/Brialius/calendar/internal/domain/models"
 	_ "github.com/jackc/pgx/stdlib"
@@ -45,15 +46,15 @@ func (pges *PgEventStorage) GetEventByIdOwner(ctx context.Context, id, owner str
 	query := `
 		SELECT * FROM events WHERE id=$1 AND owner=$2
 `
-	var event *models.Event
-	err := pges.db.GetContext(ctx, &event, query, id, owner)
+	event := &models.Event{}
+	err := pges.db.GetContext(ctx, event, query, id, owner)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.ErrNotFound
+		}
 		return nil, err
 	}
-	if event != nil {
-		return event, nil
-	}
-	return nil, errors.ErrNotFound
+	return event, nil
 }
 
 func (pges *PgEventStorage) GetEventsByOwnerStartDate(ctx context.Context, owner string, startTime *time.Time) ([]*models.Event, error) {

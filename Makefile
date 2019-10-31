@@ -43,7 +43,7 @@ lint: ## Run all the linters
 	--out-format=tab --tests=false .
 
 .PHONY: ci
-ci: setup lint test build ## Run all the tests and code checks
+ci: setup lint build ## Run all the tests and code checks
 
 .PHONY: generate
 generate:
@@ -73,5 +73,9 @@ version:
 release:
 	git tag $(ver)
 	git push origin --tags
+
+.PHONY: integration-tests
+integration-tests:
+	go test -v ./integration_tests
 
 .DEFAULT_GOAL := build

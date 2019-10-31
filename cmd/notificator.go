@@ -16,12 +16,13 @@ import (
 )
 
 func constructNotificator(storage interfaces.EventStorage, taskQueue interfaces.TaskQueue,
-	period time.Duration, qName string) *services.NotificatorService {
+	period time.Duration, qName, exchange string) *services.NotificatorService {
 	return &services.NotificatorService{
 		EventStorage: storage,
 		TaskQueue:    taskQueue,
 		Period:       period,
 		QName:        qName,
+		Exchange:     exchange,
 	}
 }
 
@@ -62,7 +63,7 @@ var NotificatorCmd = &cobra.Command{
 		}
 		defer storage.Close(ctx)
 
-		nt := constructNotificator(storage, tq, 24*time.Hour, "notification.tasks")
+		nt := constructNotificator(storage, tq, 24*time.Hour, "notification.tasks", "calendar")
 		go func() {
 			stop := make(chan os.Signal, 1)
 			signal.Notify(stop, os.Interrupt, syscall.SIGINT)

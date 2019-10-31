@@ -1,0 +1,89 @@
+version: "3.2"
+services:
+  rabbit:
+    container_name: calendar-rabbitmq
+    image: rabbitmq:3.7-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: "queue_user"
+      RABBITMQ_DEFAULT_PASS: "queue-super-password"
+    restart: on-failure
+
+  postgres:
+    container_name: calendar-postgres
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: "event_db"
+      POSTGRES_PASSWORD: "event-super-password"
+      POSTGRES_USER: "event_user"
+    restart: on-failure
+
+  calendar-service:
+    container_name: calendar-grpc-server
+    build: .
+    image: calendar
+    depends_on:
+      - postgres
+      - migrations
+    ports:
+      - "8080:8080"
+    environment:
+      GRPC-SRV-HOST: "0.0.0.0"
+      GRPC-SRV-PORT: "8080"
+      DSN: "host=postgres user=event_user password=event-super-password dbname=event_db"
+      STORAGE: "pg"
+      VERBOSE: "true"
+    command: "/app/calendar gs"
+    restart: on-failure
+
+  notificator-service:
+    container_name: calendar-notificator-service
+    build: .
+    image: calendar
+    depends_on:
+      - postgres
+      - migrations
+      - rabbit
+    environment:
+      DSN: "host=postgres user=event_user password=event-super-password dbname=event_db"
+      STORAGE: "pg"
+      AMQP-URL: "amqp://queue_user:queue-super-password@rabbit:5672/"
+      VERBOSE: "true"
+    command: "/app/calendar nt"
+    restart: on-failure
+
+  sender-service:
+    container_name: calendar-sender-service
+    build: .
+    image: calendar
+    depends_on:
+      - rabbit
+    environment:
+      AMQP-URL: "amqp://queue_user:queue-super-password@rabbit:5672/"
+      VERBOSE: "true"
+    command: "/app/calendar sn"
+    restart: on-failure
+
+  migrations-drop:
+    image: migrate/migrate
+    volumes:
+      - ./sql/:/migrations
+    command: >
+      -path /migrations/ -database postgres://event_user:event-super-password@postgres:5432/event_db?sslmode=disable drop
+    depends_on:
+      - postgres
+    restart: on-failure:10
+  migrations:
+      image: migrate/migrate
+      volumes:
+        - ./sql/:/migrations
+      command: >
+        -path /migrations/ -database postgres://event_user:event-super-password@postgres:5432/event_db?sslmode=disable up
+      depends_on:
+        - postgres
+        - migrations-drop
+      restart: on-failure:10

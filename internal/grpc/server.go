@@ -60,7 +60,7 @@ func (cs *CalendarServer) CreateEvent(ctx context.Context, req *api.CreateEventR
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	log.Printf("Event created: `%s` -  %s", req.GetTitle(), event.Id)
-	protoEvent, err := eventToProto(event)
+	protoEvent, err := EventToProto(event)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -72,7 +72,7 @@ func (cs *CalendarServer) CreateEvent(ctx context.Context, req *api.CreateEventR
 	return resp, nil
 }
 
-func eventToProto(event *models.Event) (*api.Event, error) {
+func EventToProto(event *models.Event) (*api.Event, error) {
 	protoEvent := &api.Event{
 		Id:    event.Id.String(),
 		Title: event.Title,
@@ -138,7 +138,7 @@ func (cs *CalendarServer) GetEvent(ctx context.Context, req *api.GetEventRequest
 	if config.Verbose {
 		log.Printf("Event received: `%s`", req.GetId())
 	}
-	protoEvent, err := eventToProto(event)
+	protoEvent, err := EventToProto(event)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -165,7 +165,7 @@ func (cs *CalendarServer) ListEvents(ctx context.Context, req *api.ListEventsReq
 	log.Printf("Events list received for user: `%s` since:  %s", owner, st)
 	protoEvents := make([]*api.Event, 0, len(events))
 	for _, e := range events {
-		protoEvent, err := eventToProto(e)
+		protoEvent, err := EventToProto(e)
 		if err != nil {
 			return nil, err
 		}
@@ -215,7 +215,7 @@ func (cs *CalendarServer) UpdateEvent(ctx context.Context, req *api.UpdateEventR
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	protoEvent, err := eventToProto(event)
+	protoEvent, err := EventToProto(event)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
