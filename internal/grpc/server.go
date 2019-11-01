@@ -17,6 +17,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 type CalendarServer struct {
@@ -89,11 +90,30 @@ func EventToProto(event *models.Event) (*api.Event, error) {
 }
 
 func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *api.DeleteEventRequest) (*api.DeleteEventResponse, error) {
-	log.Printf("Deleting event: `%s`...", req.GetId())
 	owner, err := getOwner(ctx)
 	if err != nil {
 		return nil, err
 	}
+	if req.GetId() == "" {
+		log.Println("Cleaning up old events..")
+		date := time.Now().AddDate(-1, 0, 0)
+		err = cs.EventService.DeleteEventsOlderDate(ctx, &date, owner)
+		if err != nil {
+			if berr, ok := err.(errors.EventError); ok {
+				log.Printf("Error during event cleaning up: %s", berr)
+				resp := &api.DeleteEventResponse{
+					Result: &api.DeleteEventResponse_Error{
+						Error: string(berr),
+					},
+				}
+				return resp, nil
+			}
+			log.Printf("Error during event cleaning up: %s", err)
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+		return &api.DeleteEventResponse{}, nil
+	}
+	log.Printf("Deleting event: `%s`...", req.GetId())
 	err = cs.EventService.DeleteEvent(ctx, req.GetId(), owner)
 	if err != nil {
 		if berr, ok := err.(errors.EventError); ok {
@@ -107,7 +127,6 @@ func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *api.DeleteEventR
 		}
 		log.Printf("Error during event deletion: `%s` -  %s", req.GetId(), err)
 		return nil, status.Error(codes.Internal, err.Error())
-
 	}
 	if config.Verbose {
 		log.Printf("Event Deleted: `%s`", req.GetId())

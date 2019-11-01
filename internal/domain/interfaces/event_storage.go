@@ -13,6 +13,7 @@ type EventStorage interface {
 	GetEventsByOwnerStartDate(ctx context.Context, owner string, startTime *time.Time) ([]*models.Event, error)
 	GetEventsCountByOwnerStartDateEndDate(ctx context.Context, owner string, startTime, endTime *time.Time) (int, error)
 	DeleteEventByIdOwner(ctx context.Context, id, owner string) error
+	DeleteEventsOlderDateByIdOwner(ctx context.Context, date *time.Time, owner string) (int64, error)
 	UpdateEventByIdOwner(ctx context.Context, id string, event *models.Event) error
 	MarkEventNotified(ctx context.Context, id string) error
 	Close(ctx context.Context)

@@ -8,7 +8,7 @@ import (
 
 func runDeleteRequest(ctx context.Context) {
 	if grpcConfig.Id == "" {
-		log.Fatal("Id is not set")
+		log.Printf("Id is not set, will purge all events older 1 year")
 	}
 	req := &api.DeleteEventRequest{
 		Id: grpcConfig.Id,

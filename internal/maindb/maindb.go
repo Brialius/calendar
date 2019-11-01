@@ -110,6 +110,15 @@ func (pges *PgEventStorage) DeleteEventByIdOwner(ctx context.Context, id, owner 
 	return err
 }
 
+func (pges *PgEventStorage) DeleteEventsOlderDateByIdOwner(ctx context.Context, date *time.Time, owner string) (int64, error) {
+	query := `
+		DELETE FROM events WHERE end_time<=$1 AND owner=$2
+	`
+	res, err := pges.db.ExecContext(ctx, query, date, owner)
+	c, _ := res.RowsAffected()
+	return c, err
+}
+
 func (pges *PgEventStorage) UpdateEventByIdOwner(ctx context.Context, id string, event *models.Event) error {
 	query := `
 		UPDATE events SET title=$3, text=$4, start_time=$5, end_time=$6 WHERE id=$1 AND owner=$2

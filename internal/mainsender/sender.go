@@ -16,6 +16,6 @@ func NewSendToStream(out io.Writer) (*SendToStream, error) {
 }
 
 func (s *SendToStream) SendEvent(ctx context.Context, event *models.Event) error {
-	_, err := fmt.Fprintf(s.out, "Send notification to `%s`: %s", event.Owner, event.Id)
+	_, err := fmt.Fprintf(s.out, "Send notification to `%s`: %s\n", event.Owner, event.Id)
 	return err
 }

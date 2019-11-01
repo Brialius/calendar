@@ -48,6 +48,16 @@ func (es *EventService) DeleteEvent(ctx context.Context, id, owner string) error
 	return nil
 }
 
+func (es *EventService) DeleteEventsOlderDate(ctx context.Context, date *time.Time, owner string) error {
+	deleted, err := es.EventStorage.DeleteEventsOlderDateByIdOwner(ctx, date, owner)
+	if err != nil {
+		log.Printf("can't delete event `%s`: %s", date, err)
+		return err
+	}
+	log.Printf("Cleaned up %d old events", deleted)
+	return nil
+}
+
 func (es *EventService) GetEvent(ctx context.Context, id, owner string) (*models.Event, error) {
 	_, err := parseUuid(id)
 	if err != nil {
