@@ -77,6 +77,7 @@ services:
     depends_on:
       - postgres
     restart: on-failure:10
+
   migrations:
       image: migrate/migrate
       volumes:
@@ -87,3 +88,18 @@ services:
         - postgres
         - migrations-drop
       restart: on-failure:10
+
+  integration_tests:
+      image: calendar-integration-tests
+      build:
+        context: .
+        dockerfile: Dockerfile-test
+      command: make integration-tests
+      depends_on:
+        - postgres
+        - migrations
+        - migrations-drop
+        - rabbit
+        - calendar-service
+        - notificator-service
+        - sender-service

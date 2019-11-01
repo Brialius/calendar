@@ -1,9 +1,9 @@
 Feature: Test event service API
 	Check API methods
 
-	Scenario: API Create and Get Event
+	Scenario: API Create Event
 		Given there is user "test_user"
-		And there is server "localhost:8080"
+		And there is server "calendar-service:8080"
 		When I create event
 		"""
 		{
@@ -17,9 +17,9 @@ Feature: Test event service API
 		Then Events should be the same
 		And I delete event by previous id
 
-	Scenario: API Update and Get Event
+	Scenario: API Update Event
 		Given there is user "test_user"
-		And there is server "localhost:8080"
+		And there is server "calendar-service:8080"
 		When I create event
 		"""
 		{
@@ -42,9 +42,9 @@ Feature: Test event service API
 		Then Events should be the same
 		And I delete event by previous id
 
-	Scenario: API Create and Delete Event
+	Scenario: API Delete Event
 		Given there is user "test_user"
-		And there is server "localhost:8080"
+		And there is server "calendar-service:8080"
 		When I create event
 		"""
 		{
@@ -56,3 +56,45 @@ Feature: Test event service API
 		"""
 		And I delete event by previous id
 		Then Event by previous id should be absent
+
+	Scenario: API List Events
+		Given there is user "test_user"
+		And there is server "calendar-service:8080"
+		When I create event
+		"""
+		{
+			"title":"test_event_list 1",
+			"text":"Test event: API List check",
+			"startTime":"2019-10-10T00:00:00Z",
+			"endTime":"2019-10-11T00:00:00Z"
+		}
+		"""
+		And I create event
+		"""
+		{
+			"title":"test_event_list 2",
+			"text":"Test event: API List check",
+			"startTime":"2019-10-12T00:00:00Z",
+			"endTime":"2019-10-13T00:00:00Z"
+		}
+		"""
+		And I create event
+		"""
+		{
+			"title":"test_event_list 3",
+			"text":"Test event: API List check",
+			"startTime":"2019-10-14T00:00:00Z",
+			"endTime":"2019-10-15T00:00:00Z"
+		}
+		"""
+		And I create event
+		"""
+		{
+			"title":"test_event_list 4",
+			"text":"Test event: API List check",
+			"startTime":"2019-10-16T00:00:00Z",
+			"endTime":"2019-10-17T00:00:00Z"
+		}
+		"""
+		And I get event list
+		Then Event list should contain created events

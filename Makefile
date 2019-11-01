@@ -76,6 +76,8 @@ release:
 
 .PHONY: integration-tests
 integration-tests:
+	echo Sleeping 20s to wait test environment...
+	sleep 20s
 	go test -v ./integration_tests
 
 .DEFAULT_GOAL := build

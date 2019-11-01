@@ -26,7 +26,6 @@ func runListRequest(ctx context.Context) {
 		log.Fatal(err)
 	}
 	req := &api.ListEventsRequest{
-		Owner:     grpcConfig.Owner,
 		StartTime: st,
 	}
 	resp, err := grpcClient.ListEvents(ctx, req)

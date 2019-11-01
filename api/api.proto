@@ -74,8 +74,7 @@ service CalendarService {
 }
 
 message ListEventsRequest {
-    string owner = 1;
-    google.protobuf.Timestamp start_time = 2;
+    google.protobuf.Timestamp start_time = 1;
 }
 
 message ListEventsResponse {

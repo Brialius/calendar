@@ -1,0 +1,5 @@
+FROM golang:1.13 AS builder
+
+COPY . /app
+WORKDIR /app
+RUN make build

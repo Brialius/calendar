@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
+	"fmt"
 	"github.com/Brialius/calendar/internal/domain/models"
 	grpcsrv "github.com/Brialius/calendar/internal/grpc"
 	"github.com/Brialius/calendar/internal/grpc/api"
 	"github.com/DATA-DOG/godog"
 	"github.com/DATA-DOG/godog/colors"
 	"github.com/DATA-DOG/godog/gherkin"
+	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"os"
@@ -76,6 +78,8 @@ func (a *apiStruct) iCreateEvent(eventJSON *gherkin.DocString) error {
 		return errors.New(errResponce)
 	}
 	a.eventToVerify = a.createResponse.GetEvent()
+	a.createdEventsIds = append(a.createdEventsIds, a.createResponse.GetEvent().Id)
+	fmt.Printf("a.createdEventsIds: %v", a.createdEventsIds)
 	return nil
 }
 
@@ -149,10 +153,37 @@ func (a *apiStruct) eventByPreviousIdShouldBeAbsent() (err error) {
 	return
 }
 
+func (a *apiStruct) iGetEventList() (err error) {
+	st, _ := ptypes.TimestampProto(time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC))
+	a.listResponse, err = a.apiCli.ListEvents(ctx, &api.ListEventsRequest{
+		StartTime: st,
+	})
+	if err != nil {
+		return err
+	}
+	if errResponce := a.getResponse.GetError(); errResponce != "event not found" {
+		return errors.New("event exists")
+	}
+	return
+}
+
+func (a *apiStruct) eventListShouldContainCreatedEvents() error {
+	if len(a.listResponse.Events) != len(a.createdEventsIds) {
+		fmt.Printf("a.listResponse.Events: %d, a.createdEventsIds: %d", len(a.listResponse.Events), len(a.createdEventsIds))
+		return errors.New("list contains wrong number of records")
+	}
+	for _, e := range a.listResponse.Events {
+		if !contains(a.createdEventsIds, e.Id) {
+			return errors.New("list has wrong records")
+		}
+	}
+	return nil
+}
+
 func FeatureContext(s *godog.Suite) {
 	a := &apiStruct{}
 	s.BeforeScenario(func(interface{}) {
-		a = &apiStruct{}
+		a.createdEventsIds = make([]string, 0)
 	})
 	s.Step(`^there is user "([^"]*)"$`, a.thereIsUser)
 	s.Step(`^there is server "([^"]*)"$`, a.thereIsServer)
@@ -162,6 +193,8 @@ func FeatureContext(s *godog.Suite) {
 	s.Step(`^I update created event$`, a.iUpdateCreatedEvent)
 	s.Step(`^I delete event by previous id$`, a.iDeleteEventByPreviousId)
 	s.Step(`^Event by previous id should be absent$`, a.eventByPreviousIdShouldBeAbsent)
+	s.Step(`^I get event list$`, a.iGetEventList)
+	s.Step(`^Event list should contain created events$`, a.eventListShouldContainCreatedEvents)
 }
 
 var opt = godog.Options{
@@ -186,4 +219,14 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(status)
+}
+
+func contains(slice []string, item string) bool {
+	set := make(map[string]struct{}, len(slice))
+	for _, s := range slice {
+		set[s] = struct{}{}
+	}
+
+	_, ok := set[item]
+	return ok
 }
