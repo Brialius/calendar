@@ -79,7 +79,6 @@ func (a *apiStruct) iCreateEvent(eventJSON *gherkin.DocString) error {
 	}
 	a.eventToVerify = a.createResponse.GetEvent()
 	a.createdEventsIds = append(a.createdEventsIds, a.createResponse.GetEvent().Id)
-	fmt.Printf("a.createdEventsIds: %v", a.createdEventsIds)
 	return nil
 }
 

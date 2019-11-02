@@ -1,12 +1,20 @@
-VERSION ?= $(shell git describe --tags --dirty --always --match=v* || echo v0)
+VERSION ?= $(shell git describe --tags --always --match=v* || echo v0)
 BUILD := $(shell git rev-parse --short HEAD)
 LDFLAGS=-ldflags "-X=main.version=$(VERSION) -X=main.build=$(BUILD)"
+LINTERFLAGS=--enable-all --disable gochecknoinits --disable gochecknoglobals --disable goimports --disable wsl --out-format=tab --tests=false
 BUILDFLAGS=$(LDFLAGS)
 PROJECTNAME=calendar
 GOEXE := $(shell go env GOEXE)
 GOPATH := $(shell go env GOPATH)
 GOOS := $(shell go env GOOS)
-BIN=bin/$(PROJECTNAME)$(GOEXE)
+BINSERVER=bin/server$(GOEXE)
+BINCLIENT=bin/client$(GOEXE)
+BINSENDER=bin/sender$(GOEXE)
+BINNOTIFICATOR=bin/notificator$(GOEXE)
+MODULESERVER=github.com/Brialius/calendar/cmd/server
+MODULECLIENT=github.com/Brialius/calendar/cmd/client
+MODULESENDER=github.com/Brialius/calendar/cmd/sender
+MODULENOTIFICATOR=github.com/Brialius/calendar/cmd/notificator
 IMPORT_PATH := /usr/local/include
 LINT_PATH := ./bin/golangci-lint
 LINT_PATH_WIN := golangci-lint
@@ -39,8 +47,10 @@ test: ## Run all the tests
 
 .PHONY: lint
 lint: ## Run all the linters
-	$(LINT_PATH) run --enable-all --disable gochecknoinits --disable gochecknoglobals --disable goimports \
-	--out-format=tab --tests=false .
+	$(LINT_PATH) run $(LINTERFLAGS) cmd/client
+	$(LINT_PATH) run $(LINTERFLAGS) cmd/notificator
+	$(LINT_PATH) run $(LINTERFLAGS) cmd/server
+	$(LINT_PATH) run $(LINTERFLAGS) cmd/sender
 
 .PHONY: ci
 ci: setup lint build ## Run all the tests and code checks
@@ -50,8 +60,23 @@ generate:
 	protoc --go_out=plugins=grpc:internal/grpc api/api.proto -I $(IMPORT_PATH) -I .
 
 .PHONY: build
-build: mod-refresh ## Build a version
-	go build $(BUILDFLAGS) -o $(BIN)
+build: clean mod-refresh build-server build-sender build-notificator build-client
+
+.PHONY: build-server
+build-server: mod-refresh ## Build a version
+	go build $(BUILDFLAGS) -o $(BINSERVER) $(MODULESERVER)
+
+.PHONY: build-sender
+build-sender: mod-refresh ## Build a version
+	go build $(BUILDFLAGS) -o $(BINSENDER) $(MODULESENDER)
+
+.PHONY: build-notificator
+build-notificator: mod-refresh ## Build a version
+	go build $(BUILDFLAGS) -o $(BINNOTIFICATOR) $(MODULENOTIFICATOR)
+
+.PHONY: build-client
+build-client: mod-refresh ## Build a version
+	go build $(BUILDFLAGS) -o $(BINCLIENT) $(MODULECLIENT)
 
 .PHONY: install
 install: mod-refresh ## Install a binary
@@ -59,10 +84,13 @@ install: mod-refresh ## Install a binary
 
 .PHONY: clean
 clean: ## Remove temporary files
-	go clean
+	go clean $(BUILDFLAGS) $(MODULESERVER)
+	go clean $(BUILDFLAGS) $(MODULECLIENT)
+	go clean $(BUILDFLAGS) $(MODULESENDER)
+	go clean $(BUILDFLAGS) $(MODULENOTIFICATOR)
 
 .PHONY: mod-refresh
-mod-refresh: clean ## Refresh modules
+mod-refresh: ## Refresh modules
 	go mod tidy -v
 
 .PHONY: version
@@ -76,8 +104,25 @@ release:
 
 .PHONY: integration-tests
 integration-tests:
-	echo Sleeping 20s to wait test environment...
-	sleep 20s
+	echo Sleeping to wait test environment...
+	sleep 40s
 	go test -v ./integration_tests
+
+.PHONY: deploy
+deploy:
+	docker-compose up -d --build
+
+.PHONY: undeploy
+undeploy:
+	docker-compose down
+
+.PHONY: deploy-tests
+deploy-tests:
+	docker-compose -f ./docker-compose.test.yaml up  -d --build
+	docker-compose -f ./docker-compose.test.yaml logs --follow integration_tests
+
+.PHONY: undeploy-tests
+undeploy-tests:
+	docker-compose -f docker-compose.test.yaml down
 
 .DEFAULT_GOAL := build

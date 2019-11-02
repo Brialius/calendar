@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"context"
@@ -14,14 +14,14 @@ import (
 	"log"
 )
 
-func constructGrpcServer(eventStorage interfaces.EventStorage) (*grpc.CalendarServer, error) {
+func constructGrpcServer(eventStorage interfaces.EventStorage) *grpc.CalendarServer {
 	eventService := &services.EventService{
 		EventStorage: eventStorage,
 	}
 	server := &grpc.CalendarServer{
 		EventService: eventService,
 	}
-	return server, nil
+	return server
 }
 
 func selectStorage(storageType, dsn string) (interfaces.EventStorage, error) {
@@ -32,8 +32,8 @@ func selectStorage(storageType, dsn string) (interfaces.EventStorage, error) {
 	return nil, errors.Errorf("storage `%s` is not implemented", storageType)
 }
 
-var GrpcServerCmd = &cobra.Command{
-	Use:   "grpc_server",
+var RootCmd = &cobra.Command{
+	Use:   "server",
 	Short: "Run gRPC server",
 	Run: func(cmd *cobra.Command, args []string) {
 		serverConfig := config.GetGrpcServerConfig()
@@ -65,10 +65,7 @@ var GrpcServerCmd = &cobra.Command{
 		}
 		defer storage.Close(context.Background())
 
-		server, err := constructGrpcServer(storage)
-		if err != nil {
-			log.Fatal(err)
-		}
+		server := constructGrpcServer(storage)
 		addr := fmt.Sprintf("%s:%s", serverConfig.Host, serverConfig.Port)
 		log.Printf("Starting server on %s...", addr)
 		err = server.Serve(addr)
@@ -76,17 +73,33 @@ var GrpcServerCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 	},
-	Aliases: []string{"gs"},
 }
 
 func init() {
-	RootCmd.AddCommand(GrpcServerCmd)
-	GrpcServerCmd.Flags().StringP("host", "n", "", "host name")
-	GrpcServerCmd.Flags().IntP("port", "p", 0, "port to listen")
-	GrpcServerCmd.Flags().StringP("dsn", "d", "", "database connection string")
-	GrpcServerCmd.Flags().StringP("storage", "s", "", "storage type")
-	_ = viper.BindPFlag("grpc-srv-host", GrpcServerCmd.Flags().Lookup("host"))
-	_ = viper.BindPFlag("grpc-srv-port", GrpcServerCmd.Flags().Lookup("port"))
-	_ = viper.BindPFlag("dsn", GrpcServerCmd.Flags().Lookup("dsn"))
-	_ = viper.BindPFlag("storage", GrpcServerCmd.Flags().Lookup("storage"))
+	cobra.OnInitialize(config.SetConfig)
+	RootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose logging")
+	RootCmd.PersistentFlags().StringP("config", "c", "", "Config file location")
+	_ = viper.BindPFlag("verbose", RootCmd.PersistentFlags().Lookup("verbose"))
+	_ = viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
+	RootCmd.Flags().StringP("host", "n", "", "host name")
+	RootCmd.Flags().IntP("port", "p", 0, "port to listen")
+	RootCmd.Flags().StringP("dsn", "d", "", "database connection string")
+	RootCmd.Flags().StringP("storage", "s", "", "storage type")
+	_ = viper.BindPFlag("grpc-srv-host", RootCmd.Flags().Lookup("host"))
+	_ = viper.BindPFlag("grpc-srv-port", RootCmd.Flags().Lookup("port"))
+	_ = viper.BindPFlag("dsn", RootCmd.Flags().Lookup("dsn"))
+	_ = viper.BindPFlag("storage", RootCmd.Flags().Lookup("storage"))
+}
+
+var (
+	version = "dev"
+	build   = "local"
+)
+
+func main() {
+	log.Printf("Started calendar gRPC server %s-%s", version, build)
+
+	if err := RootCmd.Execute(); err != nil {
+		log.Fatal(err)
+	}
 }

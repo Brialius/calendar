@@ -1,11 +1,13 @@
-package cmd
+package main
 
 import (
 	"context"
 	"github.com/Brialius/calendar/internal/config"
 	"github.com/Brialius/calendar/internal/domain/interfaces"
 	"github.com/Brialius/calendar/internal/domain/services"
+	"github.com/Brialius/calendar/internal/maindb"
 	"github.com/Brialius/calendar/internal/mainmq"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
@@ -26,9 +28,18 @@ func constructNotificator(storage interfaces.EventStorage, taskQueue interfaces.
 	}
 }
 
-var NotificatorCmd = &cobra.Command{
-	Use:   "notify",
-	Short: "Run notifier service",
+func selectStorage(storageType, dsn string) (interfaces.EventStorage, error) {
+	if storageType == "pg" {
+		eventStorage, err := maindb.NewPgEventStorage(dsn)
+		return eventStorage, err
+	}
+
+	return nil, errors.Errorf("storage `%s` is not implemented", storageType)
+}
+
+var RootCmd = &cobra.Command{
+	Use:   "notificator",
+	Short: "Run notificator service",
 	Run: func(cmd *cobra.Command, args []string) {
 		mqConf := config.GetMqConfig()
 		storageConfig := config.GetStorageConfig()
@@ -80,11 +91,26 @@ var NotificatorCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(NotificatorCmd)
-	NotificatorCmd.Flags().StringP("url", "u", "", "amqp connection url")
-	NotificatorCmd.Flags().StringP("dsn", "d", "", "database connection string")
-	NotificatorCmd.Flags().StringP("storage", "s", "", "storage type")
-	_ = viper.BindPFlag("dsn", NotificatorCmd.Flags().Lookup("dsn"))
-	_ = viper.BindPFlag("storage", NotificatorCmd.Flags().Lookup("storage"))
-	_ = viper.BindPFlag("amqp-url", NotificatorCmd.Flags().Lookup("url"))
+	cobra.OnInitialize(config.SetConfig)
+	RootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose logging")
+	RootCmd.PersistentFlags().StringP("config", "c", "", "Config file location")
+	RootCmd.Flags().StringP("url", "u", "", "amqp connection url")
+	RootCmd.Flags().StringP("dsn", "d", "", "database connection string")
+	RootCmd.Flags().StringP("storage", "s", "", "storage type")
+	_ = viper.BindPFlag("dsn", RootCmd.Flags().Lookup("dsn"))
+	_ = viper.BindPFlag("storage", RootCmd.Flags().Lookup("storage"))
+	_ = viper.BindPFlag("amqp-url", RootCmd.Flags().Lookup("url"))
+}
+
+var (
+	version = "dev"
+	build   = "local"
+)
+
+func main() {
+	log.Printf("Started calendar notificator service %s-%s", version, build)
+
+	if err := RootCmd.Execute(); err != nil {
+		log.Fatal(err)
+	}
 }

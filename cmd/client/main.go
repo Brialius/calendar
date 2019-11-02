@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"context"
@@ -20,10 +20,9 @@ import (
 const tsLayout = "2006-01-02T15:04:05"
 const ReqTimeout = time.Second * 10
 
-var GrpcClientCmd = &cobra.Command{
-	Use:       "grpc_client [add, delete, update, list]",
+var RootCmd = &cobra.Command{
+	Use:       "client [add, delete, update, list]",
 	Short:     "Run gRPC client",
-	Aliases:   []string{"gc"},
 	ValidArgs: []string{"add", "delete", "update", "list", "get", "del", "upd", "ls"},
 	Args:      cobra.ExactValidArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -79,23 +78,38 @@ func getGrpcClientConfig() *config.GrpcClientConfig {
 }
 
 func init() {
-	RootCmd.AddCommand(GrpcClientCmd)
-	GrpcClientCmd.Flags().StringP("id", "i", "", "event id")
-	GrpcClientCmd.Flags().StringP("title", "t", "", "event title")
-	GrpcClientCmd.Flags().StringP("body", "b", "", "event text body")
-	GrpcClientCmd.Flags().StringP("owner", "o", "", "event owner")
-	GrpcClientCmd.Flags().StringP("start-time", "s", "", "event start time, format: "+tsLayout)
-	GrpcClientCmd.Flags().StringP("end-time", "e", "", "event end time, format: "+tsLayout)
-	GrpcClientCmd.Flags().StringP("host", "n", "", "host name")
-	GrpcClientCmd.Flags().IntP("port", "p", 0, "port to listen")
+	cobra.OnInitialize(config.SetConfig)
+	RootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose logging")
+	RootCmd.PersistentFlags().StringP("config", "c", "", "Config file location")
+	RootCmd.Flags().StringP("id", "i", "", "event id")
+	RootCmd.Flags().StringP("title", "t", "", "event title")
+	RootCmd.Flags().StringP("body", "b", "", "event text body")
+	RootCmd.Flags().StringP("owner", "o", "", "event owner")
+	RootCmd.Flags().StringP("start-time", "s", "", "event start time, format: "+tsLayout)
+	RootCmd.Flags().StringP("end-time", "e", "", "event end time, format: "+tsLayout)
+	RootCmd.Flags().StringP("host", "n", "", "host name")
+	RootCmd.Flags().IntP("port", "p", 0, "port to listen")
 	// bind flags to viper
-	_ = viper.BindPFlag("id", GrpcClientCmd.Flags().Lookup("id"))
-	_ = viper.BindPFlag("title", GrpcClientCmd.Flags().Lookup("title"))
-	_ = viper.BindPFlag("body", GrpcClientCmd.Flags().Lookup("body"))
-	_ = viper.BindPFlag("owner", GrpcClientCmd.Flags().Lookup("owner"))
-	_ = viper.BindPFlag("start-time", GrpcClientCmd.Flags().Lookup("start-time"))
-	_ = viper.BindPFlag("end-time", GrpcClientCmd.Flags().Lookup("end-time"))
-	_ = viper.BindPFlag("grpc-cli-host", GrpcClientCmd.Flags().Lookup("host"))
-	_ = viper.BindPFlag("grpc-cli-port", GrpcClientCmd.Flags().Lookup("port"))
+	_ = viper.BindPFlag("id", RootCmd.Flags().Lookup("id"))
+	_ = viper.BindPFlag("title", RootCmd.Flags().Lookup("title"))
+	_ = viper.BindPFlag("body", RootCmd.Flags().Lookup("body"))
+	_ = viper.BindPFlag("owner", RootCmd.Flags().Lookup("owner"))
+	_ = viper.BindPFlag("start-time", RootCmd.Flags().Lookup("start-time"))
+	_ = viper.BindPFlag("end-time", RootCmd.Flags().Lookup("end-time"))
+	_ = viper.BindPFlag("grpc-cli-host", RootCmd.Flags().Lookup("host"))
+	_ = viper.BindPFlag("grpc-cli-port", RootCmd.Flags().Lookup("port"))
 	viper.Set("ts-layout", tsLayout)
+}
+
+var (
+	version = "dev"
+	build   = "local"
+)
+
+func main() {
+	log.Printf("Started calendar gRPC client %s-%s", version, build)
+
+	if err := RootCmd.Execute(); err != nil {
+		log.Fatal(err)
+	}
 }

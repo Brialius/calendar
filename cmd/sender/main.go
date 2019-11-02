@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"context"
@@ -15,7 +15,8 @@ import (
 	"syscall"
 )
 
-func constructSender(taskQueue interfaces.TaskQueue, qName string, sender interfaces.EventSender) *services.SenderService {
+func constructSender(taskQueue interfaces.TaskQueue,
+	qName string, sender interfaces.EventSender) *services.SenderService {
 	return &services.SenderService{
 		TaskQueue: taskQueue,
 		QName:     qName,
@@ -23,8 +24,8 @@ func constructSender(taskQueue interfaces.TaskQueue, qName string, sender interf
 	}
 }
 
-var SenderCmd = &cobra.Command{
-	Use:   "send",
+var RootCmd = &cobra.Command{
+	Use:   "sender",
 	Short: "Run sender service",
 	Run: func(cmd *cobra.Command, args []string) {
 		mqConf := config.GetMqConfig()
@@ -48,17 +49,36 @@ var SenderCmd = &cobra.Command{
 			cancel()
 		}()
 		sender, err := mainsender.NewSendToStream(os.Stdout)
+		if err != nil {
+			log.Fatal(err)
+		}
 		s := constructSender(tq, "notification.tasks", sender)
 		err = s.Serve(ctx)
 		if err != nil {
 			log.Fatal(err)
 		}
 	},
-	Aliases: []string{"sn"},
 }
 
 func init() {
-	RootCmd.AddCommand(SenderCmd)
-	SenderCmd.Flags().StringP("url", "u", "", "amqp connection url")
-	_ = viper.BindPFlag("amqp-url", SenderCmd.Flags().Lookup("url"))
+	cobra.OnInitialize(config.SetConfig)
+	RootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose logging")
+	RootCmd.PersistentFlags().StringP("config", "c", "", "Config file location")
+	_ = viper.BindPFlag("verbose", RootCmd.PersistentFlags().Lookup("verbose"))
+	_ = viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
+	RootCmd.Flags().StringP("url", "u", "", "amqp connection url")
+	_ = viper.BindPFlag("amqp-url", RootCmd.Flags().Lookup("url"))
+}
+
+var (
+	version = "dev"
+	build   = "local"
+)
+
+func main() {
+	log.Printf("Started calendar sender service %s-%s", version, build)
+
+	if err := RootCmd.Execute(); err != nil {
+		log.Fatal(err)
+	}
 }
