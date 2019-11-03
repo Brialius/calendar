@@ -24,11 +24,11 @@ func (n *NotificatorService) ScanEvents(ctx context.Context) error {
 
 	for _, e := range events {
 		log.Printf("sending notification to `%s` about event `%s`", e.Owner, e.Id)
-		if n.TaskQueue.SendTaskToQueue(ctx, n.Exchange, n.QName, e) != nil {
+		if err := n.TaskQueue.SendTaskToQueue(ctx, n.Exchange, n.QName, e); err != nil {
 			log.Printf("can't publish notification to task queue: %s", err)
 			break
 		}
-		if n.EventStorage.MarkEventNotified(ctx, e.Id.String()) != nil {
+		if err := n.EventStorage.MarkEventNotified(ctx, e.Id.String()); err != nil {
 			log.Printf("can't mark event `%s` as notified: %s", e.Id, err)
 		}
 	}

@@ -98,3 +98,48 @@ Feature: Test event service API
 		"""
 		And I get event list
 		Then Event list should contain created events
+		And I delete all created events
+
+	Scenario: API delete old Events
+		Given there is user "test_user"
+		And there is server "calendar-service:8080"
+		When I create event
+		"""
+		{
+			"title":"test_event_old 1",
+			"text":"Test event: API Purge check",
+			"startTime":"2010-10-10T00:00:00Z",
+			"endTime":"2010-10-11T00:00:00Z"
+		}
+		"""
+		And I create event
+		"""
+		{
+			"title":"test_event_old 2",
+			"text":"Test event: API Purge check",
+			"startTime":"2010-10-12T00:00:00Z",
+			"endTime":"2010-10-13T00:00:00Z"
+		}
+		"""
+		And I create event
+		"""
+		{
+			"title":"test_event_old 3",
+			"text":"Test event: API Purge check",
+			"startTime":"2010-10-14T00:00:00Z",
+			"endTime":"2010-10-15T00:00:00Z"
+		}
+		"""
+		And I create event
+		"""
+		{
+			"title":"test_event_new 1",
+			"text":"Test event: API Purge check",
+			"startTime":"2019-10-16T00:00:00Z",
+			"endTime":"2019-10-17T00:00:00Z"
+		}
+		"""
+		And I purge old events
+		And I get event list
+		Then Event list should contain created events
+		And I delete all created events
