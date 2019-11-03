@@ -7,6 +7,7 @@ import (
 	"github.com/Brialius/calendar/internal/domain/services"
 	"github.com/Brialius/calendar/internal/mainmq"
 	"github.com/Brialius/calendar/internal/mainsender"
+	"github.com/Brialius/calendar/internal/monitoring"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
@@ -53,6 +54,11 @@ var RootCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 		s := constructSender(tq, "notification.tasks", sender)
+		m := &monitoring.PrometheusService{
+			Port: viper.GetString("metrics-port"),
+		}
+		log.Printf("Starting monitoring server on %s...", m.Port)
+		m.Serve()
 		err = s.Serve(ctx)
 		if err != nil {
 			log.Fatal(err)
@@ -64,8 +70,10 @@ func init() {
 	cobra.OnInitialize(config.SetConfig)
 	RootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose logging")
 	RootCmd.PersistentFlags().StringP("config", "c", "", "Config file location")
+	RootCmd.PersistentFlags().StringP("metrics-port", "m", "9002", "Port for metrics server")
 	_ = viper.BindPFlag("verbose", RootCmd.PersistentFlags().Lookup("verbose"))
 	_ = viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
+	_ = viper.BindPFlag("metrics-port", RootCmd.PersistentFlags().Lookup("metrics-port"))
 	RootCmd.Flags().StringP("url", "u", "", "amqp connection url")
 	_ = viper.BindPFlag("amqp-url", RootCmd.Flags().Lookup("url"))
 }

@@ -6,8 +6,9 @@ import (
 )
 
 type GrpcServerConfig struct {
-	Host string
-	Port string
+	Host        string
+	Port        string
+	MetricsPort string
 }
 
 func GetGrpcServerConfig() *GrpcServerConfig {
@@ -19,7 +20,8 @@ func GetGrpcServerConfig() *GrpcServerConfig {
 
 func newGrpcServerConfig() *GrpcServerConfig {
 	return &GrpcServerConfig{
-		Host: viper.GetString("grpc-srv-host"),
-		Port: viper.GetString("grpc-srv-port"),
+		Host:        viper.GetString("grpc-srv-host"),
+		Port:        viper.GetString("grpc-srv-port"),
+		MetricsPort: viper.GetString("metrics-port"),
 	}
 }

@@ -26,19 +26,23 @@ type CalendarServer struct {
 
 // implements CalendarServiceServer
 func (cs *CalendarServer) CreateEvent(ctx context.Context, req *api.CreateEventRequest) (*api.CreateEventResponse, error) {
+	apiCreateEventCounter.Inc()
 	log.Printf("Creating new event: `%s`...", req.GetTitle())
 	owner, err := getOwner(ctx)
 	if err != nil {
+		apiCreateEventErrorCounter.Inc()
 		return nil, err
 	}
 	st, err := ptypes.Timestamp(req.GetStartTime())
 	if err != nil {
 		log.Printf("start time is incorrect: %s", err)
+		apiCreateEventErrorCounter.Inc()
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	et, err := ptypes.Timestamp(req.GetEndTime())
 	if err != nil {
 		log.Printf("end time is incorrect: %s", err)
+		apiCreateEventErrorCounter.Inc()
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	event, err := cs.EventService.CreateEvent(ctx, &models.Event{
@@ -49,6 +53,7 @@ func (cs *CalendarServer) CreateEvent(ctx context.Context, req *api.CreateEventR
 		EndTime:   &et,
 	})
 	if err != nil {
+		apiCreateEventErrorCounter.Inc()
 		log.Printf("Error during event creation: `%s` -  %s", req.GetTitle(), err)
 		if berr, ok := err.(errors.EventError); ok {
 			resp := &api.CreateEventResponse{
@@ -63,6 +68,7 @@ func (cs *CalendarServer) CreateEvent(ctx context.Context, req *api.CreateEventR
 	log.Printf("Event created: `%s` -  %s", req.GetTitle(), event.Id)
 	protoEvent, err := EventToProto(event)
 	if err != nil {
+		apiCreateEventErrorCounter.Inc()
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	resp := &api.CreateEventResponse{
@@ -90,6 +96,7 @@ func EventToProto(event *models.Event) (*api.Event, error) {
 }
 
 func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *api.DeleteEventRequest) (*api.DeleteEventResponse, error) {
+	apiDeleteEventCounter.Inc()
 	owner, err := getOwner(ctx)
 	if err != nil {
 		return nil, err
@@ -99,6 +106,7 @@ func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *api.DeleteEventR
 		date := time.Now().AddDate(-1, 0, 0)
 		err = cs.EventService.DeleteEventsOlderDate(ctx, &date, owner)
 		if err != nil {
+			apiDeleteEventErrorCounter.Inc()
 			if berr, ok := err.(errors.EventError); ok {
 				log.Printf("Error during event cleaning up: %s", berr)
 				resp := &api.DeleteEventResponse{
@@ -116,6 +124,7 @@ func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *api.DeleteEventR
 	log.Printf("Deleting event: `%s`...", req.GetId())
 	err = cs.EventService.DeleteEvent(ctx, req.GetId(), owner)
 	if err != nil {
+		apiDeleteEventErrorCounter.Inc()
 		if berr, ok := err.(errors.EventError); ok {
 			log.Printf("Error during event deletion: `%s` -  %s", req.GetId(), berr)
 			resp := &api.DeleteEventResponse{
@@ -135,13 +144,16 @@ func (cs *CalendarServer) DeleteEvent(ctx context.Context, req *api.DeleteEventR
 }
 
 func (cs *CalendarServer) GetEvent(ctx context.Context, req *api.GetEventRequest) (*api.GetEventResponse, error) {
+	apiGetEventCounter.Inc()
 	log.Printf("Getting event: `%s`...", req.GetId())
 	owner, err := getOwner(ctx)
 	if err != nil {
+		apiGetEventErrorCounter.Inc()
 		return nil, err
 	}
 	event, err := cs.EventService.GetEvent(ctx, req.GetId(), owner)
 	if err != nil {
+		apiGetEventErrorCounter.Inc()
 		if berr, ok := err.(errors.EventError); ok {
 			log.Printf("Error during getting event: `%s` -  %s", req.GetId(), berr)
 			resp := &api.GetEventResponse{
@@ -159,6 +171,7 @@ func (cs *CalendarServer) GetEvent(ctx context.Context, req *api.GetEventRequest
 	}
 	protoEvent, err := EventToProto(event)
 	if err != nil {
+		apiGetEventErrorCounter.Inc()
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return &api.GetEventResponse{
@@ -167,17 +180,20 @@ func (cs *CalendarServer) GetEvent(ctx context.Context, req *api.GetEventRequest
 }
 
 func (cs *CalendarServer) ListEvents(ctx context.Context, req *api.ListEventsRequest) (*api.ListEventsResponse, error) {
+	apiListEventsCounter.Inc()
 	owner, err := getOwner(ctx)
 	if err != nil {
 		return nil, err
 	}
 	st, err := ptypes.Timestamp(req.GetStartTime())
 	if err != nil {
+		apiListEventsErrorCounter.Inc()
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	log.Printf("Getting events list: Owner: `%s`, start date: %s ...", owner, st)
 	events, err := cs.EventService.ListEvents(ctx, owner, &st)
 	if err != nil {
+		apiListEventsErrorCounter.Inc()
 		log.Printf("Error during event list preparing for user: `%s` since:  %s - %s", owner, req.GetStartTime(), err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -186,6 +202,7 @@ func (cs *CalendarServer) ListEvents(ctx context.Context, req *api.ListEventsReq
 	for _, e := range events {
 		protoEvent, err := EventToProto(e)
 		if err != nil {
+			apiListEventsErrorCounter.Inc()
 			return nil, err
 		}
 		protoEvents = append(protoEvents, protoEvent)
@@ -206,23 +223,28 @@ func getOwner(ctx context.Context) (string, error) {
 }
 
 func (cs *CalendarServer) UpdateEvent(ctx context.Context, req *api.UpdateEventRequest) (*api.UpdateEventResponse, error) {
+	apiUpdateEventCounter.Inc()
 	log.Printf("Updating event: `%s`...", req.GetId())
 	owner, err := getOwner(ctx)
 	if err != nil {
+		apiUpdateEventErrorCounter.Inc()
 		return nil, err
 	}
 	st, err := ptypes.Timestamp(req.GetStartTime())
 	if err != nil {
+		apiUpdateEventErrorCounter.Inc()
 		log.Printf("start time is incorrect: %s", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	et, err := ptypes.Timestamp(req.GetEndTime())
 	if err != nil {
+		apiUpdateEventErrorCounter.Inc()
 		log.Printf("end time is incorrect: %s", err)
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	event, err := cs.EventService.UpdateEvent(ctx, owner, req.GetTitle(), req.GetText(), req.GetId(), &st, &et)
 	if err != nil {
+		apiUpdateEventErrorCounter.Inc()
 		log.Printf("Error during event creation: `%s` -  %s", req.GetTitle(), err)
 		if berr, ok := err.(errors.EventError); ok {
 			resp := &api.UpdateEventResponse{
@@ -236,6 +258,7 @@ func (cs *CalendarServer) UpdateEvent(ctx context.Context, req *api.UpdateEventR
 	}
 	protoEvent, err := EventToProto(event)
 	if err != nil {
+		apiUpdateEventErrorCounter.Inc()
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	resp := &api.UpdateEventResponse{

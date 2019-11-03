@@ -8,6 +8,7 @@ import (
 	"github.com/Brialius/calendar/internal/domain/services"
 	"github.com/Brialius/calendar/internal/grpc"
 	"github.com/Brialius/calendar/internal/maindb"
+	"github.com/Brialius/calendar/internal/monitoring"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -67,6 +68,11 @@ var RootCmd = &cobra.Command{
 
 		server := constructGrpcServer(storage)
 		addr := fmt.Sprintf("%s:%s", serverConfig.Host, serverConfig.Port)
+		m := &monitoring.PrometheusService{
+			Port: serverConfig.MetricsPort,
+		}
+		log.Printf("Starting monitoring server on %s...", m.Port)
+		m.Serve()
 		log.Printf("Starting server on %s...", addr)
 		err = server.Serve(addr)
 		if err != nil {
@@ -79,8 +85,10 @@ func init() {
 	cobra.OnInitialize(config.SetConfig)
 	RootCmd.PersistentFlags().BoolP("verbose", "v", false, "Enable verbose logging")
 	RootCmd.PersistentFlags().StringP("config", "c", "", "Config file location")
+	RootCmd.PersistentFlags().StringP("metrics-port", "m", "9001", "Port for metrics server")
 	_ = viper.BindPFlag("verbose", RootCmd.PersistentFlags().Lookup("verbose"))
 	_ = viper.BindPFlag("config", RootCmd.PersistentFlags().Lookup("config"))
+	_ = viper.BindPFlag("metrics-port", RootCmd.PersistentFlags().Lookup("metrics-port"))
 	RootCmd.Flags().StringP("host", "n", "", "host name")
 	RootCmd.Flags().IntP("port", "p", 0, "port to listen")
 	RootCmd.Flags().StringP("dsn", "d", "", "database connection string")

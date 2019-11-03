@@ -33,7 +33,9 @@ services:
       - migrations
     ports:
       - "8080:8080"
+      - "9001:9001"
     environment:
+      METRICS_PORT: "9001"
       GRPC-SRV-HOST: "0.0.0.0"
       GRPC-SRV-PORT: "8080"
       DSN: "host=postgres user=event_user password=event-super-password dbname=event_db"
@@ -68,7 +70,10 @@ services:
     image: calendar-sender
     depends_on:
       - rabbit
+    ports:
+      - "9002:9002"
     environment:
+      METRICS_PORT: "9002"
       AMQP-URL: "amqp://queue_user:queue-super-password@rabbit:5672/"
       VERBOSE: "true"
     command: "/app/sender"
@@ -82,3 +87,21 @@ services:
     depends_on:
       - postgres
     restart: on-failure:10
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command: --config.file=/etc/prometheus/prometheus.yml
+
+  postgres-exporter:
+    image: wrouesnel/postgres_exporter
+    ports:
+      - "9187:9187"
+    environment:
+      DATA_SOURCE_NAME: postgres://event_user:event-super-password@postgres:5432/event_db?sslmode=disable
+      PG_EXPORTER_EXTEND_QUERY_PATH: /custom_query.yaml
+    volumes:
+      - ./custom_query.yaml:/custom_query.yaml
