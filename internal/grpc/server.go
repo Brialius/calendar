@@ -8,6 +8,7 @@ import (
 	"github.com/Brialius/calendar/internal/domain/services"
 	"github.com/Brialius/calendar/internal/grpc/api"
 	"github.com/golang/protobuf/ptypes"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -270,7 +271,7 @@ func (cs *CalendarServer) UpdateEvent(ctx context.Context, req *api.UpdateEventR
 }
 
 func (cs *CalendarServer) Serve(addr string) error {
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor))
 	go func() {
 		stop := make(chan os.Signal, 1)
 		signal.Notify(stop, os.Interrupt, syscall.SIGINT)
@@ -284,5 +285,7 @@ func (cs *CalendarServer) Serve(addr string) error {
 		return err
 	}
 	api.RegisterCalendarServiceServer(s, cs)
+	grpc_prometheus.EnableHandlingTimeHistogram()
+	grpc_prometheus.Register(s)
 	return s.Serve(l)
 }
