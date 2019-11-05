@@ -72,6 +72,9 @@ func (a *apiStruct) thereIsServer(url string) error {
 func (a *apiStruct) iCreateEvent(eventJSON *gherkin.DocString) error {
 	event := &models.Event{}
 	err := json.Unmarshal([]byte(eventJSON.Content), event)
+	if err != nil {
+		return err
+	}
 	eventProto, err := grpcsrv.EventToProto(event)
 	if err != nil {
 		return err
@@ -116,6 +119,9 @@ func (a *apiStruct) eventsShouldBeTheSame() error {
 func (a *apiStruct) iUpdateCreatedEvent(eventJSON *gherkin.DocString) error {
 	event := &models.Event{}
 	err := json.Unmarshal([]byte(eventJSON.Content), event)
+	if err != nil {
+		return err
+	}
 	eventProto, err := grpcsrv.EventToProto(event)
 	if err != nil {
 		return err
@@ -168,7 +174,10 @@ func (a *apiStruct) eventByPreviousIdShouldBeAbsent() (err error) {
 }
 
 func (a *apiStruct) iGetEventList() (err error) {
-	st, _ := ptypes.TimestampProto(time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC))
+	st, err := ptypes.TimestampProto(time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC))
+	if err != nil {
+		return err
+	}
 	a.listResponse, err = a.apiCli.ListEvents(ctx, &api.ListEventsRequest{
 		StartTime: st,
 	})

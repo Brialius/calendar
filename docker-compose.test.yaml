@@ -4,7 +4,7 @@ services:
     container_name: calendar-rabbitmq
     image: rabbitmq:3.7-management
     ports:
-      - "5672:5672"
+      - "5672"
       - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: "queue_user"
@@ -15,7 +15,7 @@ services:
     container_name: calendar-postgres
     image: postgres
     ports:
-      - "5432:5432"
+      - "5432"
     environment:
       POSTGRES_DB: "event_db"
       POSTGRES_PASSWORD: "event-super-password"
@@ -32,7 +32,7 @@ services:
       - postgres
       - migrations
     ports:
-      - "8080:8080"
+      - "8080"
     environment:
       GRPC-SRV-HOST: "0.0.0.0"
       GRPC-SRV-PORT: "8080"
