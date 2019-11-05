@@ -74,16 +74,6 @@ services:
     command: "/app/sender"
     restart: on-failure
 
-  migrations-drop:
-    image: migrate/migrate
-    volumes:
-      - ./sql/:/migrations
-    command: >
-      -path /migrations/ -database postgres://event_user:event-super-password@postgres:5432/event_db?sslmode=disable drop
-    depends_on:
-      - postgres
-    restart: on-failure:10
-
   migrations:
       image: migrate/migrate
       volumes:
@@ -92,7 +82,6 @@ services:
         -path /migrations/ -database postgres://event_user:event-super-password@postgres:5432/event_db?sslmode=disable up
       depends_on:
         - postgres
-        - migrations-drop
       restart: on-failure:10
 
   integration_tests:
@@ -104,7 +93,6 @@ services:
       depends_on:
         - postgres
         - migrations
-        - migrations-drop
         - rabbit
         - calendar-service
         - notificator-service
